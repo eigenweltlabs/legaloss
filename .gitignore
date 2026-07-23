@@ -39,3 +39,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local database
+data/
+
+# clerk configuration (can include secrets)
+/.clerk/
+.gstack/
+
+# clerk keyless dev state
+.clerk/

@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LegalOSS
 
-## Getting Started
+A community index of open-source legal software. "Solar" design language:
+warm cream paper, vermilion signal, condensed uppercase display, JetBrains Mono
+UI, pill buttons, a restrained amount of frosted glass.
 
-First, run the development server:
+Every entry is a real GitHub repository with live stats (stars, forks, issues,
+license, activity) pulled from the GitHub API and cached server-side. Each
+repository can be indexed exactly once. Browsing needs no account; signed-in
+members can star, review, comment, and submit projects. A project's page
+belongs to whoever proves — through GitHub OAuth — that they hold admin rights
+on the repository; tagline and categories are maintainer-curated after claiming.
+
+## Stack
+
+- **Next.js 16** (App Router, `proxy.ts` request interception), React 19, TypeScript
+- **Clerk** for auth (optional sign-up; GitHub social connection for ownership claims)
+- **Drizzle ORM + better-sqlite3** (`data/app.db`, WAL mode)
+- Plain CSS design system in `app/globals.css` — no Tailwind
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+pnpm db:setup            # push schema + seed the 12-category taxonomy
+pnpm db:seed-projects    # optional: index 8 real starter projects via the GitHub API
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Clerk keys live in `.env.local` (see `.env.example`); without them Clerk runs
+in keyless dev mode. See [SETUP.md](./SETUP.md) for the checklist, including
+the GitHub social connection required by the claim flow.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How the pieces fit
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Area | Where |
+|---|---|
+| DB schema (projects, stats/readme/contributor caches, categories, stars, comments, reviews, claims) | `lib/db/schema.ts` |
+| GitHub API client + URL parsing + README/video rewriting | `lib/github.ts` |
+| Staleness logic + list/detail queries | `lib/projects.ts` |
+| Ownership verification (Clerk OAuth token → GitHub `permissions.admin`) | `lib/github-ownership.ts` |
+| Provisional auto-categorization of submissions | `lib/auto-categories.ts` |
+| All mutations (submit, star, comment, review, claim, edit) | `app/actions.ts` |
+| Lazy Clerk→DB user mirror | `lib/users.ts` |
+| Design tokens + components ("Solar") | `app/globals.css` |
 
-## Learn More
+GitHub stats refresh when older than 1 hour; READMEs and contributors after
+24 hours; stale data is served if GitHub is unreachable. Unauthenticated GitHub
+API allows 60 requests/hour — set `GITHUB_TOKEN` (fine-grained PAT, public
+read-only) for the 5,000/hour pool.
 
-To learn more about Next.js, take a look at the following resources:
+## Rules of the index
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Real repositories only.** Stats come from GitHub, never from the submitter.
+2. **One entry per repository.** Uniqueness is enforced on the case-insensitive
+   `owner/repo` key; renames are re-canonicalized on refresh.
+3. **Claims are proven, not asserted.** The claim flow fetches the user's GitHub
+   OAuth token from Clerk and checks `permissions.admin` on the repo (with a
+   numeric owner-ID fallback for personal repos). Only the verified claimant can
+   edit a project's name, tagline, website, and categories.

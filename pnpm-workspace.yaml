@@ -3,3 +3,4 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
   esbuild: true
+  '@clerk/shared': true

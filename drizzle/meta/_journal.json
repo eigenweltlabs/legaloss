@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1784825509025,
+      "tag": "0000_perpetual_red_skull",
+      "breakpoints": true
+    }
+  ]
+}
