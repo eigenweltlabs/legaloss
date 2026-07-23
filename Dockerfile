@@ -19,7 +19,8 @@ COPY . .
 RUN pnpm build
 
 FROM base AS run
-ADD https://github.com/benbjohnson/litestream/releases/download/v0.3.13/litestream-v0.3.13-linux-amd64.deb /tmp/litestream.deb
+ARG TARGETARCH
+ADD https://github.com/benbjohnson/litestream/releases/download/v0.3.13/litestream-v0.3.13-linux-${TARGETARCH}.deb /tmp/litestream.deb
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
     && dpkg -i /tmp/litestream.deb && rm /tmp/litestream.deb \
     && rm -rf /var/lib/apt/lists/* \
