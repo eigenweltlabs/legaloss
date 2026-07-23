@@ -42,7 +42,7 @@ export default async function ClaimPage({
             </span>
           </h1>
           <p className="body-l">
-            Claiming proves — through GitHub — that you control this repository.
+            Claiming proves through GitHub that you control this repository.
             Claimants get the maintainer mark and editing rights over this page.
           </p>
         </div>
@@ -74,7 +74,7 @@ export default async function ClaimPage({
                 <span className="step-num">{userId ? <IconCheck /> : "01"}</span>
                 <div className="step-body" style={{ flex: 1 }}>
                   <h4>Sign in</h4>
-                  <p>Create an account or sign in — browsing never requires it, claiming does.</p>
+                  <p>Create an account or sign in. Browsing never requires it, claiming does.</p>
                   {!userId && (
                     <div style={{ marginTop: 10 }}>
                       <Link
@@ -98,7 +98,7 @@ export default async function ClaimPage({
                     <span className="mono" style={{ fontSize: 12 }}>
                       {project.owner}/{project.repo}
                     </span>
-                    . We only read your public identity — no repo scopes.
+                    . We only read your public identity, no repo scopes.
                   </p>
                   {userId && !githubConnected && (
                     <div style={{ marginTop: 10 }}>

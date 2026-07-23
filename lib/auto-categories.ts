@@ -11,6 +11,7 @@ const RULES: [slug: string, pattern: RegExp][] = [
   ["document-automation", /\bdocument (assembly|automation|generation)\b|\btemplat|\bdrafting\b|\bguided interview/i],
   ["compliance", /\bcompliance\b|\bprivacy\b|\bgdpr\b|\bregulat|\baml\b|\bkyc\b/i],
   ["legal-ai", /\blegal.?(ai|nlp|llm)\b|\bmachine learning\b|\blanguage model|\bnlp\b|\bllm\b|\brag\b/i],
+  ["local-ai", /\blocal.?(ai|llm|first)\b|\bon.?device\b|\boffline\b|\bollama\b|\bllama.?cpp\b|\bself.?host/i],
   ["benchmarks-datasets", /\bbenchmark|\bdatasets?\b|\bcorpus\b|\beval(uation)?s?\b/i],
   ["e-discovery", /\be-?discovery\b|\bforensic|\bevidence\b/i],
   ["legal-research", /\blegal (research|search)\b|\bstatutes?\b|\blegislation\b|\bcase search\b/i],

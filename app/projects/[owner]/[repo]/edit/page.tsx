@@ -48,8 +48,8 @@ export default async function EditPage({
             </span>
           </h1>
           <p className="body-l">
-            You verified ownership through GitHub — this page is yours to curate.
-            Stats stay live from the source.
+            You verified ownership through GitHub, so this page is yours to
+            curate. Stats stay live from the source.
           </p>
         </div>
         <EditForm

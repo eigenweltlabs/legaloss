@@ -47,7 +47,7 @@ export default async function HomePage({
           </h1>
           <p className="dir-sub">
             {activeCat?.blurb ??
-              "Every project is a real GitHub repository with live stats — indexed once, reviewed by the community, claimed by its maintainer."}
+              "Every project is a real GitHub repository with live stats. Indexed once, reviewed by the community, claimed by its maintainer."}
           </p>
         </div>
         <span className="meta-mono">
@@ -87,7 +87,7 @@ export default async function HomePage({
           <p>
             {q
               ? `No projects match “${q}”. Try another term, or add the project you're thinking of.`
-              : "No projects in this category yet — submit the first one."}
+              : "No projects in this category yet. Submit the first one."}
           </p>
           <Link href="/submit" className="btn btn-primary">
             Submit a project
@@ -100,7 +100,7 @@ export default async function HomePage({
           <span className="eyebrow">For maintainers</span>
           <p>
             Build one of these? Verify ownership through GitHub and take over
-            your project's page — tagline, categories, maintainer mark.
+            your project's page: tagline, categories, maintainer mark.
           </p>
         </div>
         <Link href="/about" className="btn btn-secondary">

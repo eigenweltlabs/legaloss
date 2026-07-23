@@ -105,7 +105,7 @@ export function ReviewComposer({
           </span>
         ) : (
           <span className="form-hint" style={{ margin: 0 }}>
-            One review per member — you can revise it anytime.
+            One review per member. You can revise it anytime.
           </span>
         )}
         <button

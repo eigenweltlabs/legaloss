@@ -5,7 +5,7 @@ export function formatCount(n: number): string {
 }
 
 export function timeAgo(date: Date | null): string {
-  if (!date) return "—";
+  if (!date) return "–";
   const s = Math.floor((Date.now() - date.getTime()) / 1000);
   if (s < 60) return "just now";
   const m = Math.floor(s / 60);
@@ -20,7 +20,7 @@ export function timeAgo(date: Date | null): string {
 }
 
 export function formatDate(date: Date | null): string {
-  if (!date) return "—";
+  if (!date) return "–";
   return date.toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",

@@ -173,7 +173,7 @@ export default async function ProjectPage({ params }: { params: Params }) {
               </div>
               <h4>No README available</h4>
               <p>
-                GitHub didn't return a README for this repository — view it
+                GitHub didn't return a README for this repository. View it
                 directly on GitHub instead.
               </p>
               <a href={ghUrl} target="_blank" rel="noreferrer" className="btn btn-secondary">
@@ -205,7 +205,7 @@ export default async function ProjectPage({ params }: { params: Params }) {
               </div>
             </div>
             <p className="form-hint" style={{ marginTop: 10 }}>
-              Fetched from GitHub {stats ? timeAgo(stats.fetchedAt) : "—"}.
+              Fetched from GitHub {stats ? timeAgo(stats.fetchedAt) : "–"}.
             </p>
           </div>
 
@@ -217,7 +217,7 @@ export default async function ProjectPage({ params }: { params: Params }) {
             </div>
             <div className="kv">
               <span className="k">Language</span>
-              <span className="v">{stats?.language ?? "—"}</span>
+              <span className="v">{stats?.language ?? "–"}</span>
             </div>
             <div className="kv">
               <span className="k">Last push</span>

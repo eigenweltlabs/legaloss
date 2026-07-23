@@ -10,7 +10,7 @@ export default function SignUpPage() {
         <span className="eyebrow">Account</span>
         <h1 className="display-s">Join the index.</h1>
         <p className="body">
-          An account is optional for browsing — it unlocks stars, reviews,
+          An account is optional for browsing. It unlocks stars, reviews,
           comments, and maintainer claims.
         </p>
       </div>

@@ -27,8 +27,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "LegalOSS — Open source for the law",
-    template: "%s — LegalOSS",
+    default: "LegalOSS · Open source for the law",
+    template: "%s · LegalOSS",
   },
   description:
     "A community index of open-source legal software. Live GitHub stats, community reviews, maintainer-claimed pages.",

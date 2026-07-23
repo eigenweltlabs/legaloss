@@ -10,7 +10,7 @@ export default function SignInPage() {
         <span className="eyebrow">Account</span>
         <h1 className="display-s">Welcome back.</h1>
         <p className="body">
-          Sign in to star, review, comment — and claim the projects you maintain.
+          Sign in to star, review, comment, and claim the projects you maintain.
         </p>
       </div>
       <div className="auth-shell">

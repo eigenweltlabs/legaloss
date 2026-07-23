@@ -10,6 +10,7 @@ export const CATEGORY_SEED: { slug: string; name: string; blurb: string }[] = [
   { slug: "access-to-justice", name: "Access to Justice", blurb: "Tools that help people navigate the law without a lawyer." },
   { slug: "compliance", name: "Compliance & Privacy", blurb: "Regulatory compliance, data protection, and policy tooling." },
   { slug: "legal-ai", name: "Legal AI & NLP", blurb: "Models, pipelines, and applications for legal language." },
+  { slug: "local-ai", name: "Local AI", blurb: "AI that runs on your own machine. No cloud, no data leaving the building." },
   { slug: "esignature", name: "E-Signature & Workflow", blurb: "Signing, approvals, and legally binding process automation." },
   { slug: "benchmarks-datasets", name: "Benchmarks & Datasets", blurb: "Evaluation suites and datasets for legal-domain systems." },
 ];

@@ -41,7 +41,7 @@ export function ClaimButton({
       {result &&
         (result.ok ? (
           <div className="notice is-success">
-            Ownership verified. This project is now yours — redirecting…
+            Ownership verified. This project is now yours. Redirecting…
           </div>
         ) : (
           <div className="notice is-error">{result.error}</div>
