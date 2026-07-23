@@ -1,6 +1,6 @@
 /**
  * House icon set: inline SVG, 1.6px stroke, round caps/joins, currentColor,
- * 20px box — matching the Eigenwelt stroke style.
+ * 20px box — 1.6px stroke house style.
  */
 import type { SVGProps } from "react";
 

@@ -32,7 +32,7 @@ function headers(token?: string): HeadersInit {
   const h: Record<string, string> = {
     Accept: "application/vnd.github+json",
     "X-GitHub-Api-Version": API_VERSION,
-    "User-Agent": "open-legal-index",
+    "User-Agent": "legaloss",
   };
   const auth = token ?? process.env.GITHUB_TOKEN;
   if (auth) h.Authorization = `Bearer ${auth}`;

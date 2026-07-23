@@ -1,13 +1,15 @@
-# Open Legal Index
+# LegalOSS
 
-A community index of open-source legal software, by [Eigenwelt Labs](https://eigenweltlabs.com).
-Paper-white editorial surfaces, deep ultramarine, liquid glass — the "Deep Current" design language.
+A community index of open-source legal software. "Solar" design language:
+warm cream paper, vermilion signal, condensed uppercase display, JetBrains Mono
+UI, pill buttons, a restrained amount of frosted glass.
 
-Every entry is a real GitHub repository with live stats (stars, forks, issues, license,
-activity) pulled from the GitHub API and cached server-side. Each repository can be
-indexed exactly once. Browsing needs no account; signed-in members can star, review,
-comment, and submit projects. A project's page belongs to whoever proves — through
-GitHub OAuth — that they hold admin rights on the repository.
+Every entry is a real GitHub repository with live stats (stars, forks, issues,
+license, activity) pulled from the GitHub API and cached server-side. Each
+repository can be indexed exactly once. Browsing needs no account; signed-in
+members can star, review, comment, and submit projects. A project's page
+belongs to whoever proves — through GitHub OAuth — that they hold admin rights
+on the repository; tagline and categories are maintainer-curated after claiming.
 
 ## Stack
 
@@ -25,26 +27,27 @@ pnpm db:seed-projects    # optional: index 8 real starter projects via the GitHu
 pnpm dev
 ```
 
-On first run Clerk starts in **keyless dev mode** — auth works immediately with a
-temporary dev instance; claim it from the banner in the app (or `.clerk/.tmp/keyless.json`)
-to configure it properly. See [SETUP.md](./SETUP.md) for the full production checklist,
-including enabling the GitHub social connection required by the claim flow.
+Clerk keys live in `.env.local` (see `.env.example`); without them Clerk runs
+in keyless dev mode. See [SETUP.md](./SETUP.md) for the checklist, including
+the GitHub social connection required by the claim flow.
 
 ## How the pieces fit
 
 | Area | Where |
 |---|---|
-| DB schema (projects, stats cache, categories, stars, comments, reviews, claims) | `lib/db/schema.ts` |
-| GitHub API client + URL parsing + README rewriting | `lib/github.ts` |
-| Stats/README staleness + list/detail queries | `lib/projects.ts` |
+| DB schema (projects, stats/readme/contributor caches, categories, stars, comments, reviews, claims) | `lib/db/schema.ts` |
+| GitHub API client + URL parsing + README/video rewriting | `lib/github.ts` |
+| Staleness logic + list/detail queries | `lib/projects.ts` |
 | Ownership verification (Clerk OAuth token → GitHub `permissions.admin`) | `lib/github-ownership.ts` |
+| Provisional auto-categorization of submissions | `lib/auto-categories.ts` |
 | All mutations (submit, star, comment, review, claim, edit) | `app/actions.ts` |
 | Lazy Clerk→DB user mirror | `lib/users.ts` |
-| Design tokens + components ("Deep Current") | `app/globals.css` |
+| Design tokens + components ("Solar") | `app/globals.css` |
 
-GitHub stats refresh when older than 1 hour, READMEs after 24 hours; stale data is
-served if GitHub is unreachable. Unauthenticated GitHub API allows 60 requests/hour —
-set `GITHUB_TOKEN` (fine-grained PAT, public read-only) for the 5,000/hour pool.
+GitHub stats refresh when older than 1 hour; READMEs and contributors after
+24 hours; stale data is served if GitHub is unreachable. Unauthenticated GitHub
+API allows 60 requests/hour — set `GITHUB_TOKEN` (fine-grained PAT, public
+read-only) for the 5,000/hour pool.
 
 ## Rules of the index
 

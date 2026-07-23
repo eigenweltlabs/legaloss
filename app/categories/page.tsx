@@ -34,13 +34,13 @@ export default async function CategoriesPage() {
         {rows.map((c) => (
           <Link
             key={c.slug}
-            href={`/projects?category=${c.slug}`}
+            href={`/?category=${c.slug}`}
             className="card card-hover project-card"
             style={{ minHeight: 150 }}
           >
             <div className="pc-top">
               <div className="pc-name">{c.name}</div>
-              <IconArrowRight style={{ width: 16, height: 16, color: "var(--muted-3)", flexShrink: 0 }} />
+              <IconArrowRight style={{ width: 16, height: 16, color: "var(--ink-500)", flexShrink: 0 }} />
             </div>
             <p className="pc-desc">{c.blurb}</p>
             <div className="pc-meta">

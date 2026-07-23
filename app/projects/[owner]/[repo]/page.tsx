@@ -145,7 +145,7 @@ export default async function ProjectPage({ params }: { params: Params }) {
         {cats.length > 0 && (
           <div className="cluster">
             {cats.map((c) => (
-              <Link key={c.slug} href={`/projects?category=${c.slug}`} className="tag">
+              <Link key={c.slug} href={`/?category=${c.slug}`} className="tag">
                 {c.name}
               </Link>
             ))}

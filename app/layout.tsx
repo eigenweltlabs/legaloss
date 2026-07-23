@@ -1,29 +1,37 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Big_Shoulders, Inter, JetBrains_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
 
-const geistSans = Geist({
+const bigShoulders = Big_Shoulders({
   subsets: ["latin"],
-  variable: "--font-geist-sans",
+  weight: ["600", "700", "800"],
+  variable: "--font-big-shoulders",
   display: "swap",
 });
-const geistMono = Geist_Mono({
+const jetbrains = JetBrains_Mono({
   subsets: ["latin"],
-  variable: "--font-geist-mono",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-jetbrains",
+  display: "swap",
+});
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-inter",
   display: "swap",
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "Open Legal Index — Open source for the law",
-    template: "%s — Open Legal Index",
+    default: "LegalOSS — Open source for the law",
+    template: "%s — LegalOSS",
   },
   description:
-    "A curated index of open-source legal software. Community-submitted, GitHub-verified, maintainer-claimed. By Eigenwelt Labs.",
+    "A community index of open-source legal software. Live GitHub stats, community reviews, maintainer-claimed pages.",
 };
 
 export default function RootLayout({
@@ -35,7 +43,10 @@ export default function RootLayout({
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
     >
-      <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <html
+        lang="en"
+        className={`${bigShoulders.variable} ${jetbrains.variable} ${inter.variable}`}
+      >
         <body>
           <SiteHeader />
           <main>{children}</main>

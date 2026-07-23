@@ -1,4 +1,4 @@
-# Setup
+# Setup (LegalOSS)
 
 ## Local dev (works out of the box)
 

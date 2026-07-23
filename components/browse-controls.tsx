@@ -21,7 +21,7 @@ export function BrowseControls() {
       if (v) next.set(k, v);
       else next.delete(k);
     }
-    router.replace(`/projects?${next.toString()}`, { scroll: false });
+    router.replace(`/?${next.toString()}`, { scroll: false });
   }
 
   return (

@@ -14,6 +14,24 @@ export function ProjectCard({
   const desc = project.tagline ?? project.description;
   return (
     <div className="card card-hover project-card">
+      <div className="pc-cat">
+        <span>
+          {project.categories.length > 0
+            ? project.categories
+                .slice(0, 2)
+                .map((c) => c.name)
+                .join(" · ")
+            : "Uncategorized"}
+        </span>
+        {project.claimedById ? (
+          <span className="status-pill is-claimed" title="Claimed by its maintainer">
+            <span className="dot" />
+            Maintained
+          </span>
+        ) : project.archived ? (
+          <span className="status-pill is-archived">Archived</span>
+        ) : null}
+      </div>
       <div className="pc-top">
         <div style={{ minWidth: 0 }}>
           <Link
@@ -26,25 +44,8 @@ export function ProjectCard({
             {project.owner}/{project.repo}
           </div>
         </div>
-        {project.claimedById ? (
-          <span className="status-pill is-claimed" title="Claimed by its maintainer">
-            <span className="dot" />
-            Maintained
-          </span>
-        ) : project.archived ? (
-          <span className="status-pill is-archived">Archived</span>
-        ) : null}
       </div>
       {desc ? <p className="pc-desc">{desc}</p> : <p className="pc-desc" />}
-      {project.categories.length > 0 && (
-        <div className="pc-tags">
-          {project.categories.slice(0, 3).map((c) => (
-            <span key={c.slug} className="tag">
-              {c.name}
-            </span>
-          ))}
-        </div>
-      )}
       <div className="pc-meta">
         <span className="m" title="GitHub stars">
           <IconStar filled />

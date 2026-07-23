@@ -32,7 +32,7 @@ async function fetchRepo(owner: string, repo: string) {
   const headers: Record<string, string> = {
     Accept: "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28",
-    "User-Agent": "open-legal-index-seed",
+    "User-Agent": "legaloss-seed",
   };
   if (process.env.GITHUB_TOKEN) {
     headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;

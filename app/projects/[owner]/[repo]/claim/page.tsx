@@ -50,7 +50,7 @@ export default async function ClaimPage({
         {alreadyClaimedByOther ? (
           <div className="notice is-warning">
             This project has already been claimed by its maintainer. If you
-            believe that's wrong, reach out to Eigenwelt Labs.
+            believe that's wrong, get in touch via the footer.
           </div>
         ) : claimedByMe ? (
           <div className="stack-16">
