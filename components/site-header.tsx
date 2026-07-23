@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Show, UserButton } from "@clerk/nextjs";
+import { formatCount } from "@/lib/format";
+import { IconStar } from "@/components/icons";
 
 const LINKS = [
   { href: "/", label: "Directory" },
@@ -11,7 +13,7 @@ const LINKS = [
   { href: "/about", label: "About" },
 ];
 
-export function SiteHeader() {
+export function SiteHeader({ trackedStars }: { trackedStars: number }) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -39,6 +41,11 @@ export function SiteHeader() {
               </Link>
             ))}
           </nav>
+          <span className="topbar-stat" title="GitHub stars across all indexed projects">
+            <IconStar filled />
+            <span className="numeral">{formatCount(trackedStars)}</span>
+            <span className="topbar-stat-l">tracked</span>
+          </span>
           <div className="topbar-right">
             <Show when="signed-out">
               <Link href="/sign-in" className="topbar-login">
