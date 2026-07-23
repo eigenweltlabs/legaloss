@@ -32,9 +32,12 @@ function createDb() {
     const migrationsFolder = path.join(process.cwd(), "drizzle");
     if (fs.existsSync(migrationsFolder)) {
       migrate(database, { migrationsFolder });
-      bootstrapSeed(database);
     }
   }
+  // Idempotent on every boot: category upserts are no-ops once present, and
+  // the starter seed exits early unless the index is empty (so a rate-limited
+  // first boot retries on the next cold start).
+  bootstrapSeed(database);
   return database;
 }
 
