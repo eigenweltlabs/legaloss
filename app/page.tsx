@@ -47,7 +47,7 @@ export default async function HomePage({
           </h1>
           <p className="dir-sub">
             {activeCat?.blurb ??
-              "Every project is a real GitHub repository with live stats. Indexed once, reviewed by the community, claimed by its maintainer."}
+              "Every project is a real GitHub repository, stats refreshed from the source. One listing per repo, reviewed by the community, claimed by its maintainer."}
           </p>
         </div>
         <span className="meta-mono">
