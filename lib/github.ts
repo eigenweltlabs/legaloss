@@ -130,6 +130,24 @@ export async function fetchReadmeHtml(
   );
 }
 
+/**
+ * GitHub's open_issues_count includes open pull requests. The Search API
+ * gives the real open-issue number; callers fall back to the raw count.
+ */
+export async function fetchOpenIssueCount(
+  owner: string,
+  repo: string,
+): Promise<number | null> {
+  const q = encodeURIComponent(`repo:${owner}/${repo} is:issue is:open`);
+  const res = await fetch(`${API}/search/issues?q=${q}&per_page=1`, {
+    headers: headers(),
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+  const j = await res.json();
+  return typeof j.total_count === "number" ? j.total_count : null;
+}
+
 export type ContributorData = {
   login: string;
   avatarUrl: string;
