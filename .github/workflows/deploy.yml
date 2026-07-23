@@ -49,7 +49,7 @@ jobs:
             --project "$PROJECT" \
             --region "$REGION" \
             --image "$IMAGE:${{ github.sha }}" \
-            --allow-unauthenticated \
+            --no-invoker-iam-check \
             --min-instances 0 \
             --max-instances 1 \
             --memory 512Mi \
