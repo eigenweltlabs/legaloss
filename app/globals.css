@@ -1,7 +1,7 @@
 /* ==========================================================================
-   Open Legal Index — "Solar"
+   LegalOSS — "Solar"
    Warm cream paper, vermilion signal, condensed uppercase display,
-   JetBrains Mono UI. Square panels, pill buttons, a restrained amount
+   Inter UI with mono reserved for data. Square panels, pill buttons, a restrained amount
    of frosted glass on floating surfaces.
    ========================================================================== */
 
@@ -83,10 +83,10 @@ html, body {
   margin: 0; padding: 0;
   background: var(--cream);
   color: var(--ink);
-  font-family: var(--font-mono);
-  font-size: 13.5px;
-  line-height: 1.6;
-  letter-spacing: 0.01em;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  letter-spacing: -0.005em;
   -webkit-font-smoothing: antialiased;
 }
 body { overflow-x: clip; }
@@ -112,11 +112,11 @@ p { margin: 0; }
 }
 .display-xl { font-size: clamp(72px, 9vw, 140px); line-height: 0.86; letter-spacing: -0.02em; }
 .display-l  { font-size: clamp(56px, 7vw, 104px); line-height: 0.88; letter-spacing: -0.015em; }
-.display-m  { font-size: clamp(40px, 4.6vw, 64px); line-height: 0.92; letter-spacing: -0.01em; font-weight: 700; }
+.display-m  { font-size: clamp(36px, 4.2vw, 56px); line-height: 0.94; letter-spacing: -0.01em; font-weight: 700; }
 .display-s  { font-size: clamp(26px, 2.8vw, 38px); line-height: 1.0; font-weight: 700; }
-.body-l { font-family: var(--font-mono); font-size: 15px; line-height: 1.6; letter-spacing: 0.01em; color: var(--ink); }
-.body   { font-family: var(--font-mono); font-size: 13.5px; line-height: 1.6; color: var(--ink); }
-.body-s { font-family: var(--font-mono); font-size: 12px; line-height: 1.55; letter-spacing: 0.02em; color: var(--ink-500); }
+.body-l { font-family: var(--font-sans); font-size: 16px; line-height: 1.55; color: var(--ink); }
+.body   { font-family: var(--font-sans); font-size: 14px; line-height: 1.55; color: var(--ink); }
+.body-s { font-family: var(--font-sans); font-size: 12.5px; line-height: 1.5; color: var(--ink-500); }
 .prose  { font-family: var(--font-sans); }
 .mono, code, kbd { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em; }
 .numeral { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
@@ -126,8 +126,8 @@ p { margin: 0; }
 .eyebrow {
   display: inline-flex; align-items: center; gap: 8px;
   font-family: var(--font-mono); font-weight: 500;
-  font-size: 11px; line-height: 16px;
-  text-transform: uppercase; letter-spacing: 0.14em;
+  font-size: 10.5px; line-height: 16px;
+  text-transform: uppercase; letter-spacing: 0.1em;
   color: var(--ink-700);
 }
 .eyebrow::before {
@@ -176,8 +176,8 @@ p { margin: 0; }
   background: linear-gradient(180deg, rgba(251, 247, 232, 0.6), rgba(245, 239, 216, 0.35));
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  font-family: var(--font-mono); font-size: 10.5px; font-weight: 500;
-  letter-spacing: 0.1em; text-transform: uppercase;
+  font-family: var(--font-sans); font-size: 12.5px; font-weight: 500;
+  letter-spacing: -0.01em;
   color: var(--ink);
   transition: background var(--dur-fast) var(--ease-soft), color var(--dur-fast) var(--ease-soft), border-color var(--dur-fast) var(--ease-soft);
 }
@@ -195,8 +195,8 @@ a.glass-chip:hover, button.glass-chip:hover {
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   height: 36px; padding: 0 18px;
-  font-family: var(--font-mono); font-weight: 500;
-  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  font-family: var(--font-sans); font-weight: 500;
+  font-size: 13px; letter-spacing: -0.01em;
   border-radius: var(--radius-pill);
   white-space: nowrap; user-select: none;
   cursor: pointer; outline: none;
@@ -209,8 +209,8 @@ a.glass-chip:hover, button.glass-chip:hover {
 .btn:disabled, .btn[aria-disabled="true"] { pointer-events: none; opacity: 0.45; }
 .btn svg { width: 15px; height: 15px; flex-shrink: 0; }
 
-.btn-sm { height: 30px; padding: 0 14px; font-size: 10px; }
-.btn-lg { height: 44px; padding: 0 24px; font-size: 12px; }
+.btn-sm { height: 31px; padding: 0 14px; font-size: 12.5px; }
+.btn-lg { height: 44px; padding: 0 24px; font-size: 14px; }
 
 .btn-primary {
   background: var(--vermilion); color: var(--cream);
@@ -247,12 +247,12 @@ a.glass-chip:hover, button.glass-chip:hover {
 
 .form-label {
   display: block;
-  font-family: var(--font-mono); font-weight: 500;
-  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--ink-deep); margin-bottom: 8px;
+  font-family: var(--font-sans); font-weight: 550;
+  font-size: 13px; letter-spacing: -0.01em;
+  color: var(--ink-deep); margin-bottom: 7px;
 }
-.form-hint { font-size: 11.5px; letter-spacing: 0.02em; color: var(--ink-500); margin-top: 6px; }
-.form-error { font-size: 11.5px; letter-spacing: 0.02em; color: var(--danger); margin-top: 6px; }
+.form-hint { font-family: var(--font-sans); font-size: 12px; color: var(--ink-500); margin-top: 6px; }
+.form-error { font-family: var(--font-sans); font-size: 12px; color: var(--danger); margin-top: 6px; }
 
 .field {
   display: flex; align-items: center; gap: 9px;
@@ -269,7 +269,7 @@ a.glass-chip:hover, button.glass-chip:hover {
 .field input {
   min-width: 0; flex: 1; height: 100%;
   background: transparent; border: 0; outline: none;
-  font: inherit; font-size: 13px; color: var(--ink-deep);
+  font-family: var(--font-sans); font-size: 14px; color: var(--ink-deep);
 }
 .field input::placeholder { color: var(--ink-500); opacity: 0.7; }
 
@@ -278,7 +278,7 @@ a.glass-chip:hover, button.glass-chip:hover {
   background: var(--paper-lift);
   border: 1px solid var(--rule);
   border-radius: var(--radius-md);
-  font: inherit; font-size: 13px; line-height: 1.6; color: var(--ink-deep);
+  font-family: var(--font-sans); font-size: 14px; line-height: 1.55; color: var(--ink-deep);
   resize: vertical; outline: none;
   transition: border-color var(--dur-fast) var(--ease-soft), box-shadow var(--dur-fast) var(--ease-soft);
 }
@@ -295,8 +295,8 @@ a.glass-chip:hover, button.glass-chip:hover {
   background-position: right 10px center;
   border: 1px solid var(--rule);
   border-radius: var(--radius-md);
-  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
-  letter-spacing: 0.1em; text-transform: uppercase;
+  font-family: var(--font-sans); font-size: 13px; font-weight: 500;
+  letter-spacing: -0.01em;
   color: var(--ink-deep);
   outline: none; cursor: pointer;
   transition: border-color var(--dur-fast) var(--ease-soft), box-shadow var(--dur-fast) var(--ease-soft);
@@ -311,8 +311,8 @@ a.glass-chip:hover, button.glass-chip:hover {
   border-radius: var(--radius-pill);
   border: 1px solid rgba(31, 18, 8, 0.3);
   background: transparent;
-  font-family: var(--font-mono); font-size: 10.5px; font-weight: 500;
-  letter-spacing: 0.1em; text-transform: uppercase;
+  font-family: var(--font-sans); font-size: 12.5px; font-weight: 500;
+  letter-spacing: -0.01em;
   color: var(--ink);
   cursor: pointer; user-select: none;
   transition: border-color var(--dur-fast) var(--ease-soft), background var(--dur-fast) var(--ease-soft), color var(--dur-fast) var(--ease-soft);
@@ -329,7 +329,7 @@ a.glass-chip:hover, button.glass-chip:hover {
 .notice {
   display: flex; gap: 10px; align-items: flex-start;
   padding: 12px 14px; border-radius: var(--radius-md);
-  font-size: 12.5px; line-height: 1.6;
+  font-family: var(--font-sans); font-size: 13px; line-height: 1.55;
   border: 1px solid var(--rule);
   background: var(--paper-lift); color: var(--ink);
 }
@@ -361,8 +361,8 @@ a.glass-chip:hover, button.glass-chip:hover {
   border-radius: var(--radius-pill);
   border: 1px solid rgba(232, 68, 42, 0.35);
   background: rgba(232, 68, 42, 0.05);
-  font-family: var(--font-mono); font-size: 9.5px; font-weight: 500;
-  letter-spacing: 0.12em; text-transform: uppercase;
+  font-family: var(--font-mono); font-size: 10px; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--vermilion-700);
   white-space: nowrap;
   transition: background var(--dur-fast) ease, color var(--dur-fast) ease, border-color var(--dur-fast) ease;
@@ -373,7 +373,7 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   display: inline-flex; align-items: center; gap: 6px;
   border-radius: var(--radius-pill); padding: 3px 10px;
   font-family: var(--font-mono); font-size: 9.5px; font-weight: 600;
-  letter-spacing: 0.1em; text-transform: uppercase;
+  letter-spacing: 0.06em; text-transform: uppercase;
 }
 .status-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .status-pill.is-claimed { background: var(--forest-200); color: var(--forest); }
@@ -423,7 +423,7 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   background: rgba(255, 255, 255, 0.3);
 }
 .stat-tile .stat-v { font-family: var(--font-mono); font-size: 24px; letter-spacing: -0.02em; line-height: 1; }
-.stat-tile .stat-l { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.14em; font-weight: 600; text-transform: uppercase; line-height: 1.3; color: var(--ink-500); }
+.stat-tile .stat-l { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; font-weight: 600; text-transform: uppercase; line-height: 1.3; color: var(--ink-500); }
 .stat-tile.is-blue .stat-v { color: var(--vermilion); }
 .stat-tile.is-violet .stat-v { color: var(--forest); }
 
@@ -443,16 +443,16 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   display: flex; align-items: center; justify-content: space-between; gap: 24px;
 }
 .topbar-brand {
-  font-family: var(--font-mono); font-weight: 600;
-  font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+  font-family: var(--font-sans); font-weight: 650;
+  font-size: 15.5px; letter-spacing: -0.02em;
   color: var(--ink-deep);
   white-space: nowrap;
 }
 .topbar-brand:hover { color: var(--vermilion); }
 .topbar-links { display: flex; gap: clamp(18px, 2.4vw, 34px); align-items: center; }
 .topbar-links a {
-  font-family: var(--font-mono); font-size: 10.5px; font-weight: 500;
-  letter-spacing: 0.14em; text-transform: uppercase;
+  font-family: var(--font-sans); font-size: 13.5px; font-weight: 500;
+  letter-spacing: -0.01em;
   color: var(--ink-700);
   white-space: nowrap;
   transition: color var(--dur-fast) ease;
@@ -460,8 +460,8 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 .topbar-links a:hover, .topbar-links a.is-current { color: var(--vermilion); }
 .topbar-right { display: flex; align-items: center; gap: clamp(10px, 1.2vw, 16px); }
 .topbar-login {
-  font-family: var(--font-mono); font-size: 10.5px; font-weight: 500;
-  letter-spacing: 0.14em; text-transform: uppercase;
+  font-family: var(--font-sans); font-size: 13.5px; font-weight: 500;
+  letter-spacing: -0.01em;
   color: var(--ink-700);
   transition: color var(--dur-fast) ease;
   white-space: nowrap;
@@ -507,7 +507,7 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   margin-bottom: 22px;
 }
 .dir-head h1 { position: relative; }
-.dir-head .dir-sub { max-width: 520px; margin-top: 10px; color: var(--ink-700); font-size: 12.5px; }
+.dir-head .dir-sub { font-family: var(--font-sans); max-width: 520px; margin-top: 12px; color: var(--ink-700); font-size: 14px; }
 
 .section-head { display: flex; flex-direction: column; gap: 14px; margin-bottom: clamp(24px, 3.5vh, 40px); }
 .section-head .row { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
@@ -543,21 +543,21 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 .project-card .pc-star-slot { position: relative; z-index: 1; margin-left: auto; }
 
 .pc-cat {
-  font-family: var(--font-mono); font-size: 9px; font-weight: 600;
-  letter-spacing: 0.14em; text-transform: uppercase;
+  font-family: var(--font-mono); font-size: 9.5px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
   color: var(--vermilion-700);
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   min-height: 18px;
 }
 .project-card .pc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .project-card .pc-name {
-  font-family: var(--font-display); font-weight: 700; text-transform: uppercase;
-  font-size: 24px; line-height: 0.95; letter-spacing: 0;
+  font-family: var(--font-sans); font-weight: 600;
+  font-size: 17px; line-height: 1.25; letter-spacing: -0.02em;
   color: var(--ink-deep);
   transition: color var(--dur-fast) ease;
 }
 .project-card:hover .pc-name { color: var(--vermilion); }
-.project-card .pc-owner { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.03em; color: var(--ink-500); margin-top: 5px; }
+.project-card .pc-owner { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.01em; color: var(--ink-500); margin-top: 3px; }
 .project-card .pc-desc {
   font-family: var(--font-sans); font-size: 13px; line-height: 1.5; letter-spacing: 0;
   color: var(--ink-700);
@@ -567,8 +567,7 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 .project-card .pc-meta {
   display: flex; align-items: center; gap: 12px;
   padding-top: 11px; border-top: 1px solid var(--rule-2);
-  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0;
   color: var(--ink-500);
 }
 .project-card .pc-meta svg { width: 12px; height: 12px; vertical-align: -2px; margin-right: 4px; color: var(--ink-500); }
@@ -602,7 +601,7 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
   background: rgba(255, 255, 255, 0.25);
 }
-.claim-band p { color: var(--ink-700); font-size: 12.5px; max-width: 560px; }
+.claim-band p { font-family: var(--font-sans); color: var(--ink-700); font-size: 13.5px; max-width: 560px; }
 
 /* ==========================================================================
    Project detail
@@ -625,12 +624,12 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 .side-card { padding: 18px; border-radius: var(--radius-lg); }
 .side-card h3 {
   font-family: var(--font-mono); font-size: 10px; font-weight: 600;
-  letter-spacing: 0.16em; text-transform: uppercase;
+  letter-spacing: 0.1em; text-transform: uppercase;
   color: var(--ink-500); margin-bottom: 12px;
 }
 .kv { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 6px 0; }
 .kv + .kv { border-top: 1px solid var(--rule-2); }
-.kv .k { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-500); }
+.kv .k { font-family: var(--font-sans); font-size: 12.5px; color: var(--ink-500); }
 .kv .v { font-family: var(--font-mono); font-size: 12px; color: var(--ink-deep); text-align: right; overflow-wrap: anywhere; }
 .kv .v a:hover { color: var(--vermilion); }
 
@@ -697,8 +696,7 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   padding: 9px 18px; border-radius: var(--radius-pill);
   border: 1px solid var(--ink-deep);
   background: transparent;
-  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
-  letter-spacing: 0.14em; text-transform: uppercase;
+  font-family: var(--font-sans); font-size: 13px; font-weight: 500;
   color: var(--ink-deep) !important; text-decoration: none !important;
   transition: background var(--dur-fast) var(--ease-soft), color var(--dur-fast) var(--ease-soft);
 }
@@ -723,8 +721,8 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   border-bottom: 1px solid var(--rule);
 }
 .social-head h2 {
-  font-family: var(--font-display); font-weight: 700; text-transform: uppercase;
-  font-size: 24px; letter-spacing: 0;
+  font-family: var(--font-sans); font-weight: 600;
+  font-size: 17px; letter-spacing: -0.02em;
 }
 .social-count {
   font-family: var(--font-mono); font-size: 11px;
@@ -758,7 +756,7 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 .entry + .entry { border-top: 1px solid var(--rule-2); }
 .entry-body { flex: 1; min-width: 0; }
 .entry-head { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
-.entry-author { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; color: var(--ink-deep); }
+.entry-author { font-family: var(--font-sans); font-size: 13px; font-weight: 600; color: var(--ink-deep); }
 .entry-head .rating svg { width: 12px; height: 12px; }
 .entry-date {
   margin-left: auto;
@@ -769,8 +767,7 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 .entry-text { font-family: var(--font-sans); font-size: 13.5px; line-height: 1.6; letter-spacing: 0; color: var(--ink); margin-top: 5px; white-space: pre-wrap; overflow-wrap: break-word; }
 .entry-actions { margin-top: 8px; display: flex; justify-content: flex-end; }
 .entry-actions button {
-  font-family: var(--font-mono); font-size: 9.5px; font-weight: 500;
-  letter-spacing: 0.1em; text-transform: uppercase;
+  font-family: var(--font-sans); font-size: 11.5px; font-weight: 500;
   color: var(--ink-500); padding: 3px 9px; border-radius: var(--radius-pill);
   transition: color var(--dur-fast) ease, background var(--dur-fast) ease;
 }
@@ -788,8 +785,8 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   background: var(--cream-deep); color: var(--ink-700);
 }
 .empty-state .es-icon svg { width: 20px; height: 20px; }
-.empty-state h4 { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-deep); }
-.empty-state p { font-size: 12px; max-width: 380px; }
+.empty-state h4 { font-family: var(--font-sans); font-size: 14px; font-weight: 600; color: var(--ink-deep); }
+.empty-state p { font-family: var(--font-sans); font-size: 13px; max-width: 380px; }
 
 /* ==========================================================================
    Claim / auth surfaces
@@ -807,8 +804,8 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   background: var(--vermilion-200);
 }
 .step.is-done .step-num { background: var(--forest-200); color: var(--forest); }
-.step-body h4 { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 3px; }
-.step-body p { font-size: 12px; color: var(--ink-700); }
+.step-body h4 { font-family: var(--font-sans); font-size: 13.5px; font-weight: 600; margin-bottom: 3px; }
+.step-body p { font-family: var(--font-sans); font-size: 12.5px; color: var(--ink-700); }
 
 .auth-shell { display: flex; justify-content: center; padding: 20px 0 60px; }
 
@@ -825,19 +822,18 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
 }
 .footer-brand {
-  font-family: var(--font-mono); font-weight: 600;
-  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  font-family: var(--font-sans); font-weight: 650;
+  font-size: 13.5px; letter-spacing: -0.02em;
   color: var(--ink-deep);
 }
 .footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
 .footer-links a {
-  font-family: var(--font-mono); font-size: 10px; font-weight: 500;
-  letter-spacing: 0.12em; text-transform: uppercase;
+  font-family: var(--font-sans); font-size: 12.5px; font-weight: 500;
   color: var(--ink-500);
   transition: color var(--dur-fast) ease;
 }
 .footer-links a:hover { color: var(--vermilion); }
-.footer-credit { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em; color: var(--ink-500); }
+.footer-credit { font-family: var(--font-sans); font-size: 12px; color: var(--ink-500); }
 .footer-credit a:hover { color: var(--vermilion); }
 
 /* ==========================================================================
