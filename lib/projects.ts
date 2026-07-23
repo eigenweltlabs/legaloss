@@ -13,7 +13,7 @@ import {
   stars,
   users,
 } from "@/lib/db/schema";
-import { fetchContributors, fetchReadmeHtml, fetchRepo } from "@/lib/github";
+import { fetchContributors, fetchOpenIssueCount, fetchReadmeHtml, fetchRepo } from "@/lib/github";
 
 const STATS_TTL_SECONDS = 60 * 60; // 1 hour
 const README_TTL_SECONDS = 60 * 60 * 24; // 24 hours
@@ -186,10 +186,11 @@ export async function ensureFreshStats(project: {
   if (result.error) return stat; // keep stale cache; GitHub hiccup or rate limit
 
   const d = result.data;
+  const issueCount = await fetchOpenIssueCount(project.owner, project.repo);
   const values = {
     stars: d.stars,
     forks: d.forks,
-    openIssues: d.openIssues,
+    openIssues: issueCount ?? d.openIssues,
     subscribers: d.subscribers,
     language: d.language,
     licenseSpdx: d.licenseSpdx,
