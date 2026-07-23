@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { categories } from "@/lib/db/schema";
 import { listProjects, type SortKey } from "@/lib/projects";
@@ -33,8 +34,9 @@ export default async function ProjectsPage({
     ? (sortParam as SortKey)
     : "gh-stars";
 
+  const { userId } = await auth();
   const [items, cats] = await Promise.all([
-    listProjects({ q, categorySlug: category, sort }),
+    listProjects({ q, categorySlug: category, sort, userId }),
     db.select().from(categories).orderBy(categories.sort),
   ]);
   const activeCat = cats.find((c) => c.slug === category);
@@ -68,7 +70,7 @@ export default async function ProjectsPage({
       {items.length > 0 ? (
         <div className="project-grid">
           {items.map((p) => (
-            <ProjectCard key={p.id} project={p} />
+            <ProjectCard key={p.id} project={p} signedIn={userId !== null} />
           ))}
         </div>
       ) : (

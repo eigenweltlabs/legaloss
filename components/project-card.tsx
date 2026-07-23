@@ -1,18 +1,27 @@
 import Link from "next/link";
 import type { ProjectListItem } from "@/lib/projects";
 import { formatCount, timeAgo } from "@/lib/format";
+import { CardStar } from "@/components/card-star";
 import { IconFork, IconStar, IconClock } from "@/components/icons";
 
-export function ProjectCard({ project }: { project: ProjectListItem }) {
+export function ProjectCard({
+  project,
+  signedIn,
+}: {
+  project: ProjectListItem;
+  signedIn: boolean;
+}) {
   const desc = project.tagline ?? project.description;
   return (
-    <Link
-      href={`/projects/${project.owner}/${project.repo}`}
-      className="card card-hover project-card"
-    >
+    <div className="card card-hover project-card">
       <div className="pc-top">
-        <div>
-          <div className="pc-name">{project.name}</div>
+        <div style={{ minWidth: 0 }}>
+          <Link
+            href={`/projects/${project.owner}/${project.repo}`}
+            className="pc-link"
+          >
+            <span className="pc-name">{project.name}</span>
+          </Link>
           <div className="pc-owner">
             {project.owner}/{project.repo}
           </div>
@@ -50,7 +59,15 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
           {timeAgo(project.pushedAt)}
         </span>
         {project.language && <span className="m">{project.language}</span>}
+        <span className="pc-star-slot">
+          <CardStar
+            projectId={project.id}
+            initialStarred={project.starredByUser}
+            initialCount={project.siteStars}
+            signedIn={signedIn}
+          />
+        </span>
       </div>
-    </Link>
+    </div>
   );
 }

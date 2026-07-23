@@ -22,7 +22,7 @@ export function ReviewComposer({
 
   if (!signedIn) {
     return (
-      <div className="notice">
+      <div className="notice" style={{ marginBottom: 22 }}>
         <span>
           <Link href="/sign-in" className="accent">
             Sign in
@@ -35,7 +35,7 @@ export function ReviewComposer({
 
   return (
     <form
-      className="card composer"
+      className="glass composer"
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
@@ -53,9 +53,9 @@ export function ReviewComposer({
         });
       }}
     >
-      <div className="row-between" style={{ marginBottom: 10 }}>
-        <span className="form-label" style={{ margin: 0 }}>
-          {existing ? "Update your review" : "Rate this project"}
+      <div className="composer-head">
+        <span className="form-label">
+          {existing ? "Your review" : "Rate this project"}
         </span>
         <div
           className="rating-input"
@@ -79,15 +79,14 @@ export function ReviewComposer({
           ))}
         </div>
       </div>
-      <input
-        className="textarea"
-        style={{ minHeight: 0, height: 40 }}
-        name="title"
-        placeholder="Headline (optional)"
-        maxLength={120}
-        defaultValue={existing?.title ?? ""}
-      />
-      <div style={{ height: 8 }} />
+      <div className="field">
+        <input
+          name="title"
+          placeholder="Headline (optional)"
+          maxLength={120}
+          defaultValue={existing?.title ?? ""}
+        />
+      </div>
       <textarea
         className="textarea"
         name="body"
@@ -97,13 +96,17 @@ export function ReviewComposer({
       />
       <div className="composer-foot">
         {error ? (
-          <span className="form-error">{error}</span>
+          <span className="form-error" style={{ margin: 0 }}>
+            {error}
+          </span>
         ) : saved ? (
-          <span className="form-hint" style={{ color: "#2E6B52" }}>
+          <span className="form-hint" style={{ margin: 0, color: "#2E6B52" }}>
             Review saved.
           </span>
         ) : (
-          <span />
+          <span className="form-hint" style={{ margin: 0 }}>
+            One review per member — you can revise it anytime.
+          </span>
         )}
         <button
           type="submit"

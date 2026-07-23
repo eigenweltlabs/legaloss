@@ -5,6 +5,7 @@ import {
   categories,
   comments,
   projectCategories,
+  projectContributors,
   projectReadmes,
   projects,
   projectStats,
@@ -12,7 +13,7 @@ import {
   stars,
   users,
 } from "@/lib/db/schema";
-import { fetchReadmeHtml, fetchRepo } from "@/lib/github";
+import { fetchContributors, fetchReadmeHtml, fetchRepo } from "@/lib/github";
 
 const STATS_TTL_SECONDS = 60 * 60; // 1 hour
 const README_TTL_SECONDS = 60 * 60 * 24; // 24 hours
@@ -32,6 +33,7 @@ export type ProjectListItem = {
   pushedAt: Date | null;
   archived: boolean;
   siteStars: number;
+  starredByUser: boolean;
   reviewCount: number;
   avgRating: number | null;
   categories: { slug: string; name: string }[];
@@ -43,8 +45,10 @@ export async function listProjects(opts: {
   categorySlug?: string;
   q?: string;
   sort?: SortKey;
+  /** When set, each item carries whether this user has starred it. */
+  userId?: string | null;
 } = {}): Promise<ProjectListItem[]> {
-  const { categorySlug, q, sort = "gh-stars" } = opts;
+  const { categorySlug, q, sort = "gh-stars", userId = null } = opts;
 
   const siteStarAgg = db
     .select({
@@ -114,6 +118,7 @@ export async function listProjects(opts: {
       pushedAt: projectStats.pushedAt,
       archived: sql<boolean>`coalesce(${projectStats.archived}, 0)`,
       siteStars: sql<number>`coalesce(${siteStarAgg.n}, 0)`,
+      starredByUser: sql<boolean>`exists (select 1 from ${stars} where ${stars.projectId} = ${projects.id} and ${stars.userId} = ${userId ?? ""})`,
       reviewCount: sql<number>`coalesce(${reviewAgg.n}, 0)`,
       avgRating: reviewAgg.avg,
     })
@@ -147,6 +152,7 @@ export async function listProjects(opts: {
   return rows.map((r) => ({
     ...r,
     archived: Boolean(r.archived),
+    starredByUser: Boolean(r.starredByUser),
     categories: catsByProject.get(r.id) ?? [],
   }));
 }
@@ -247,6 +253,37 @@ export async function ensureFreshReadme(project: {
       set: { html, fetchedAt: new Date() },
     });
   return html;
+}
+
+const CONTRIBUTORS_TTL_SECONDS = 60 * 60 * 24; // 24 hours
+
+export async function ensureFreshContributors(project: {
+  id: number;
+  owner: string;
+  repo: string;
+}) {
+  const existing = await db
+    .select()
+    .from(projectContributors)
+    .where(eq(projectContributors.projectId, project.id))
+    .limit(1);
+  const row = existing[0] ?? null;
+  const age = row ? (Date.now() - row.fetchedAt.getTime()) / 1000 : Infinity;
+  if (row && age < CONTRIBUTORS_TTL_SECONDS) return row;
+
+  const result = await fetchContributors(project.owner, project.repo);
+  if (!result) return row; // keep stale cache on GitHub errors
+
+  const values = {
+    data: result.contributors,
+    hasMore: result.hasMore,
+    fetchedAt: new Date(),
+  };
+  await db
+    .insert(projectContributors)
+    .values({ projectId: project.id, ...values })
+    .onConflictDoUpdate({ target: projectContributors.projectId, set: values });
+  return { projectId: project.id, ...values };
 }
 
 export async function getProjectSocial(projectId: number, userId: string | null) {

@@ -7,16 +7,12 @@ import { previewRepo, submitProject, type RepoPreview } from "@/app/actions";
 import { formatCount } from "@/lib/format";
 import { IconCheck, IconGitHub, IconSearch, IconStar } from "@/components/icons";
 
-type Cat = { slug: string; name: string };
-
-export function SubmitForm({ categories }: { categories: Cat[] }) {
+export function SubmitForm() {
   const router = useRouter();
   const [url, setUrl] = useState("");
   const [preview, setPreview] = useState<RepoPreview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [existingPath, setExistingPath] = useState<string | null>(null);
-  const [selected, setSelected] = useState<string[]>([]);
-  const [tagline, setTagline] = useState("");
   const [checking, startChecking] = useTransition();
   const [submitting, startSubmitting] = useTransition();
 
@@ -35,24 +31,10 @@ export function SubmitForm({ categories }: { categories: Cat[] }) {
     });
   }
 
-  function toggleCat(slug: string) {
-    setSelected((prev) =>
-      prev.includes(slug)
-        ? prev.filter((s) => s !== slug)
-        : prev.length < 4
-          ? [...prev, slug]
-          : prev,
-    );
-  }
-
   function submit() {
     setError(null);
     startSubmitting(async () => {
-      const result = await submitProject({
-        url,
-        tagline: tagline || undefined,
-        categorySlugs: selected,
-      });
+      const result = await submitProject({ url });
       if (result.ok) {
         router.push(result.path);
       } else {
@@ -141,56 +123,16 @@ export function SubmitForm({ categories }: { categories: Cat[] }) {
             </div>
           </div>
 
-          <div>
-            <label className="form-label">
-              Categories <span className="form-hint" style={{ display: "inline" }}>(1–4)</span>
-            </label>
-            <div className="cluster">
-              {categories.map((c) => {
-                const checked = selected.includes(c.slug);
-                return (
-                  <label
-                    key={c.slug}
-                    className={`choice-chip${checked ? " is-checked" : ""}`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => toggleCat(c.slug)}
-                    />
-                    {checked && <IconCheck style={{ width: 13, height: 13 }} />}
-                    {c.name}
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-
-          <div>
-            <label className="form-label" htmlFor="tagline">
-              Tagline <span className="form-hint" style={{ display: "inline" }}>(optional)</span>
-            </label>
-            <div className="field">
-              <input
-                id="tagline"
-                type="text"
-                maxLength={180}
-                placeholder="One sentence on what it does — defaults to the GitHub description"
-                value={tagline}
-                onChange={(e) => setTagline(e.target.value)}
-              />
-            </div>
-          </div>
-
           <div className="row-between">
-            <p className="form-hint" style={{ margin: 0 }}>
-              Stats refresh automatically from GitHub after indexing.
+            <p className="form-hint" style={{ margin: 0, maxWidth: 380 }}>
+              Stats stay live from GitHub. Tagline and categories are curated by
+              the maintainer once they claim the page.
             </p>
             <button
               type="button"
               className="btn btn-primary btn-lg"
               onClick={submit}
-              disabled={submitting || selected.length === 0}
+              disabled={submitting}
             >
               {submitting ? "Adding…" : "Add to the index"}
             </button>

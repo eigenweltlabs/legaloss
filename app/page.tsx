@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
 import { sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { categories, projects, projectStats } from "@/lib/db/schema";
@@ -11,8 +12,9 @@ import { IconArrowRight, IconSearch, IconShield } from "@/components/icons";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  const { userId } = await auth();
   const [featured, cats, counts] = await Promise.all([
-    listProjects({ sort: "gh-stars" }).then((all) => all.slice(0, 6)),
+    listProjects({ sort: "gh-stars", userId }).then((all) => all.slice(0, 6)),
     db.select().from(categories).orderBy(categories.sort),
     db
       .select({
@@ -115,7 +117,7 @@ export default async function HomePage() {
           {featured.length > 0 ? (
             <div className="project-grid">
               {featured.map((p) => (
-                <ProjectCard key={p.id} project={p} />
+                <ProjectCard key={p.id} project={p} signedIn={userId !== null} />
               ))}
             </div>
           ) : (

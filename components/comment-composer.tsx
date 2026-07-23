@@ -17,7 +17,7 @@ export function CommentComposer({
 
   if (!signedIn) {
     return (
-      <div className="notice">
+      <div className="notice" style={{ marginBottom: 22 }}>
         <span>
           <Link href="/sign-in" className="accent">
             Sign in
@@ -31,7 +31,7 @@ export function CommentComposer({
   return (
     <form
       ref={formRef}
-      className="card composer"
+      className="glass composer"
       onSubmit={(e) => {
         e.preventDefault();
         const body = String(new FormData(e.currentTarget).get("body") ?? "");
@@ -51,7 +51,13 @@ export function CommentComposer({
         required
       />
       <div className="composer-foot">
-        {error ? <span className="form-error">{error}</span> : <span />}
+        {error ? (
+          <span className="form-error" style={{ margin: 0 }}>
+            {error}
+          </span>
+        ) : (
+          <span />
+        )}
         <button type="submit" className="btn btn-primary" disabled={pending}>
           {pending ? "Posting…" : "Post comment"}
         </button>

@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { categories, projectCategories, users } from "@/lib/db/schema";
 import {
+  ensureFreshContributors,
   ensureFreshReadme,
   ensureFreshStats,
   getProject,
@@ -45,7 +46,7 @@ export default async function ProjectPage({ params }: { params: Params }) {
 
   const { userId } = await auth();
 
-  const [stats, cats, social, claimant] = await Promise.all([
+  const [stats, cats, social, claimant, contributors] = await Promise.all([
     ensureFreshStats(project),
     db
       .select({ slug: categories.slug, name: categories.name })
@@ -62,6 +63,7 @@ export default async function ProjectPage({ params }: { params: Params }) {
           .limit(1)
           .then((r) => r[0] ?? null)
       : Promise.resolve(null),
+    ensureFreshContributors(project),
   ]);
   const readmeHtml = stats
     ? await ensureFreshReadme(project, stats.defaultBranch ?? "main")
@@ -250,6 +252,39 @@ export default async function ProjectPage({ params }: { params: Params }) {
             )}
           </div>
 
+          {contributors && contributors.data.length > 0 && (
+            <div className="card side-card">
+              <h3>Authors</h3>
+              <div className="authors-grid">
+                {contributors.data.slice(0, 24).map((c) => (
+                  <a
+                    key={c.login}
+                    href={c.htmlUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="author"
+                    title={`@${c.login} · ${c.contributions} commit${c.contributions !== 1 ? "s" : ""}`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`${c.avatarUrl}&s=64`} alt={`@${c.login}`} loading="lazy" />
+                  </a>
+                ))}
+              </div>
+              <p className="form-hint" style={{ marginTop: 12 }}>
+                <a
+                  href={`https://github.com/${project.owner}/${project.repo}/graphs/contributors`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="accent"
+                >
+                  {contributors.hasMore
+                    ? `100+ contributors on GitHub →`
+                    : `${contributors.data.length} contributor${contributors.data.length !== 1 ? "s" : ""} on GitHub →`}
+                </a>
+              </p>
+            </div>
+          )}
+
           <div className="card side-card">
             <h3>Maintainer</h3>
             {claimant ? (
@@ -304,112 +339,111 @@ export default async function ProjectPage({ params }: { params: Params }) {
         </aside>
       </div>
 
-      <section className="social-section">
-        <h2 className="display-s">Reviews</h2>
-        <p className="social-sub">
-          Structured judgment from people who've deployed it.
-        </p>
-        {avgRating !== null && (
-          <div className="review-summary">
-            <span className="avg">{avgRating.toFixed(1)}</span>
-            <div className="stack-4">
-              <Rating value={Math.round(avgRating)} />
-              <span className="of">
-                {social.reviews.length} review{social.reviews.length !== 1 && "s"}
+      <div className="social-grid">
+        <section className="social-section">
+          <div className="social-head">
+            <h2>Reviews</h2>
+            <span className="social-count">{social.reviews.length}</span>
+            {avgRating !== null && (
+              <span className="review-avg-inline">
+                <span className="avg">{avgRating.toFixed(1)}</span>
+                <Rating value={Math.round(avgRating)} />
               </span>
-            </div>
+            )}
           </div>
-        )}
-        <ReviewComposer
-          projectId={project.id}
-          signedIn={userId !== null}
-          existing={
-            myReview
-              ? { rating: myReview.rating, title: myReview.title, body: myReview.body }
-              : null
-          }
-        />
-        {social.reviews.length > 0 ? (
-          <div>
-            {social.reviews.map((r) => (
-              <div key={r.id} className="entry">
-                <span className="avatar is-sm">
-                  {r.authorImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={r.authorImage} alt="" />
-                  ) : (
-                    initials(r.authorName)
-                  )}
-                </span>
-                <div className="entry-body">
-                  <div className="entry-head">
-                    <span className="entry-author">{r.authorName ?? "Member"}</span>
-                    <Rating value={r.rating} />
-                    <span className="entry-date">{formatDate(r.createdAt)}</span>
-                  </div>
-                  {r.title && <div className="entry-title">{r.title}</div>}
-                  {r.body && <div className="entry-text">{r.body}</div>}
-                  {userId === r.userId && (
-                    <div className="entry-actions">
-                      <EntryDelete kind="review" id={r.id} />
+          <ReviewComposer
+            projectId={project.id}
+            signedIn={userId !== null}
+            existing={
+              myReview
+                ? { rating: myReview.rating, title: myReview.title, body: myReview.body }
+                : null
+            }
+          />
+          {social.reviews.length > 0 ? (
+            <div>
+              {social.reviews.map((r) => (
+                <div key={r.id} className="entry">
+                  <span className="avatar">
+                    {r.authorImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={r.authorImage} alt="" />
+                    ) : (
+                      initials(r.authorName)
+                    )}
+                  </span>
+                  <div className="entry-body">
+                    <div className="entry-head">
+                      <span className="entry-author">{r.authorName ?? "Member"}</span>
+                      <Rating value={r.rating} />
+                      <span className="entry-date">{formatDate(r.createdAt)}</span>
                     </div>
-                  )}
+                    {r.title && <div className="entry-title">{r.title}</div>}
+                    {r.body && <div className="entry-text">{r.body}</div>}
+                    {userId === r.userId && (
+                      <div className="entry-actions">
+                        <EntryDelete kind="review" id={r.id} />
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state" style={{ marginTop: 16 }}>
-            <div className="es-icon">
-              <IconStar />
+              ))}
             </div>
-            <h4>No reviews yet</h4>
-            <p>Used this in practice? Your judgment is the signal.</p>
-          </div>
-        )}
-      </section>
+          ) : (
+            <div className="empty-state">
+              <div className="es-icon">
+                <IconStar />
+              </div>
+              <h4>No reviews yet</h4>
+              <p>Used this in practice? Your judgment is the signal.</p>
+            </div>
+          )}
+        </section>
 
-      <section className="social-section">
-        <h2 className="display-s">Discussion</h2>
-        <p className="social-sub">Questions, experience, deployment notes.</p>
-        <CommentComposer projectId={project.id} signedIn={userId !== null} />
-        {social.comments.length > 0 ? (
-          <div>
-            {social.comments.map((c) => (
-              <div key={c.id} className="entry">
-                <span className="avatar is-sm">
-                  {c.authorImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={c.authorImage} alt="" />
-                  ) : (
-                    initials(c.authorName)
-                  )}
-                </span>
-                <div className="entry-body">
-                  <div className="entry-head">
-                    <span className="entry-author">{c.authorName ?? "Member"}</span>
-                    <span className="entry-date">{formatDate(c.createdAt)}</span>
-                  </div>
-                  <div className="entry-text">{c.body}</div>
-                  {userId === c.userId && (
-                    <div className="entry-actions">
-                      <EntryDelete kind="comment" id={c.id} />
+        <section className="social-section">
+          <div className="social-head">
+            <h2>Discussion</h2>
+            <span className="social-count">{social.comments.length}</span>
+          </div>
+          <CommentComposer projectId={project.id} signedIn={userId !== null} />
+          {social.comments.length > 0 ? (
+            <div>
+              {social.comments.map((c) => (
+                <div key={c.id} className="entry">
+                  <span className="avatar">
+                    {c.authorImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={c.authorImage} alt="" />
+                    ) : (
+                      initials(c.authorName)
+                    )}
+                  </span>
+                  <div className="entry-body">
+                    <div className="entry-head">
+                      <span className="entry-author">{c.authorName ?? "Member"}</span>
+                      <span className="entry-date">{formatDate(c.createdAt)}</span>
                     </div>
-                  )}
+                    <div className="entry-text">{c.body}</div>
+                    {userId === c.userId && (
+                      <div className="entry-actions">
+                        <EntryDelete kind="comment" id={c.id} />
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state" style={{ marginTop: 16 }}>
-            <div className="es-icon">
-              <IconMessage />
+              ))}
             </div>
-            <h4>No comments yet</h4>
-            <p>Start the discussion.</p>
-          </div>
-        )}
-      </section>
+          ) : (
+            <div className="empty-state">
+              <div className="es-icon">
+                <IconMessage />
+              </div>
+              <h4>No comments yet</h4>
+              <p>Start the discussion.</p>
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

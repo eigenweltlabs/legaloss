@@ -14,6 +14,7 @@ import {
   reviews,
   stars,
 } from "@/lib/db/schema";
+import { autoCategorize } from "@/lib/auto-categories";
 import { fetchRepo, parseGitHubUrl } from "@/lib/github";
 import { verifyRepoOwnership } from "@/lib/github-ownership";
 import { ensureCurrentUser } from "@/lib/users";
@@ -98,8 +99,6 @@ export async function previewRepo(
 
 const submitSchema = z.object({
   url: z.string().min(1),
-  tagline: z.string().trim().max(180).optional(),
-  categorySlugs: z.array(z.string()).min(1, "Pick at least one category.").max(4),
 });
 
 export async function submitProject(
@@ -122,11 +121,15 @@ export async function submitProject(
   const d = result.data;
   if (d.isPrivate) return fail("Only public repositories can be indexed.");
 
-  const catRows = await db
-    .select()
-    .from(categories)
-    .where(inArray(categories.slug, body.data.categorySlugs));
-  if (catRows.length === 0) return fail("Pick at least one category.");
+  // Tagline and categories are maintainer-curated after claiming; submissions
+  // only get a provisional auto-categorization from GitHub topics/description.
+  const provisionalSlugs = autoCategorize(d.topics, d.description, d.repo);
+  const catRows = provisionalSlugs.length
+    ? await db
+        .select()
+        .from(categories)
+        .where(inArray(categories.slug, provisionalSlugs))
+    : [];
 
   const key = d.fullName.toLowerCase();
   let projectId: number;
@@ -138,7 +141,6 @@ export async function submitProject(
         repo: d.repo,
         fullNameKey: key,
         name: d.repo,
-        tagline: body.data.tagline || null,
         submittedById: userId,
       })
       .returning({ id: projects.id });
@@ -173,9 +175,11 @@ export async function submitProject(
     archived: d.archived,
     fetchedAt: new Date(),
   });
-  await db.insert(projectCategories).values(
-    catRows.map((c) => ({ projectId, categoryId: c.id })),
-  );
+  if (catRows.length > 0) {
+    await db.insert(projectCategories).values(
+      catRows.map((c) => ({ projectId, categoryId: c.id })),
+    );
+  }
 
   revalidateProject(d);
   return { ok: true, path: projectPath(d) };

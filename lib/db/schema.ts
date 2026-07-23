@@ -86,6 +86,26 @@ export const projectReadmes = sqliteTable("project_readmes", {
     .default(sql`(unixepoch())`),
 });
 
+export type Contributor = {
+  login: string;
+  avatarUrl: string;
+  htmlUrl: string;
+  contributions: number;
+};
+
+/** Cached GitHub contributor list (top page, bots excluded). 1:1 with projects. */
+export const projectContributors = sqliteTable("project_contributors", {
+  projectId: integer("project_id")
+    .primaryKey()
+    .references(() => projects.id, { onDelete: "cascade" }),
+  data: text("data", { mode: "json" }).$type<Contributor[]>().notNull().default([]),
+  /** Total contributor count is unknown past the first page; this flags "100+". */
+  hasMore: integer("has_more", { mode: "boolean" }).notNull().default(false),
+  fetchedAt: integer("fetched_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+});
+
 export const categories = sqliteTable("categories", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   slug: text("slug").notNull().unique(),

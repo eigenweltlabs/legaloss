@@ -123,7 +123,55 @@ export async function fetchReadmeHtml(
   );
   if (!res.ok) return null;
   const html = await res.text();
-  return rewriteRelativeUrls(html, owner, repo, defaultBranch);
+  return replaceVideos(
+    rewriteRelativeUrls(html, owner, repo, defaultBranch),
+    owner,
+    repo,
+  );
+}
+
+export type ContributorData = {
+  login: string;
+  avatarUrl: string;
+  htmlUrl: string;
+  contributions: number;
+};
+
+/** First page of contributors (up to 100), bots excluded. */
+export async function fetchContributors(
+  owner: string,
+  repo: string,
+): Promise<{ contributors: ContributorData[]; hasMore: boolean } | null> {
+  const res = await fetch(
+    `${API}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contributors?per_page=100`,
+    { headers: headers(), cache: "no-store" },
+  );
+  if (!res.ok) return null;
+  const list = await res.json();
+  if (!Array.isArray(list)) return null;
+  const contributors = list
+    .filter((c) => c.type === "User" && !String(c.login).endsWith("[bot]"))
+    .map((c) => ({
+      login: String(c.login),
+      avatarUrl: String(c.avatar_url ?? ""),
+      htmlUrl: String(c.html_url ?? `https://github.com/${c.login}`),
+      contributions: Number(c.contributions ?? 0),
+    }));
+  // A rel="next" Link header means the list continues past this page.
+  const hasMore = /rel="next"/.test(res.headers.get("link") ?? "");
+  return { contributors, hasMore };
+}
+
+/**
+ * GitHub embeds README videos with short-lived signed URLs that expire well
+ * within our cache TTL, leaving a large dead player. Swap them for a link.
+ */
+function replaceVideos(html: string, owner: string, repo: string): string {
+  const href = `https://github.com/${owner}/${repo}#readme`;
+  return html.replace(
+    /<video[\s\S]*?(?:<\/video>|\/>)/gi,
+    `<p><a class="readme-video-link" href="${href}" target="_blank" rel="noreferrer">Watch the video on GitHub &rarr;</a></p>`,
+  );
 }
 
 function rewriteRelativeUrls(
