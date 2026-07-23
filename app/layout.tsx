@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { sql } from "drizzle-orm";
 import { Big_Shoulders, Inter, JetBrains_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { clerkAppearance } from "@/lib/clerk-appearance";
+import { db } from "@/lib/db";
+import { projectStats } from "@/lib/db/schema";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
@@ -34,9 +37,13 @@ export const metadata: Metadata = {
     "A community index of open-source legal software. Live GitHub stats, community reviews, maintainer-claimed pages.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const agg = await db
+    .select({ total: sql<number>`coalesce(sum(${projectStats.stars}), 0)` })
+    .from(projectStats);
+  const trackedStars = Number(agg[0]?.total ?? 0);
   return (
     <ClerkProvider
       appearance={clerkAppearance}
@@ -48,7 +55,7 @@ export default function RootLayout({
         className={`${bigShoulders.variable} ${jetbrains.variable} ${inter.variable}`}
       >
         <body>
-          <SiteHeader />
+          <SiteHeader trackedStars={trackedStars} />
           <main>{children}</main>
           <SiteFooter />
         </body>
