@@ -56,4 +56,4 @@ jobs:
             --memory 512Mi \
             --service-account legaloss-run@eigenweltlabs-training.iam.gserviceaccount.com \
             --set-env-vars "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }},LITESTREAM_BUCKET=eigenweltlabs-training-legaloss-db,SEED_STARTERS=1" \
-            --set-secrets "CLERK_SECRET_KEY=legaloss-clerk-secret-key:latest"
+            --set-secrets "CLERK_SECRET_KEY=legaloss-clerk-secret-key:latest,GITHUB_TOKEN=legaloss-github-token:latest"
