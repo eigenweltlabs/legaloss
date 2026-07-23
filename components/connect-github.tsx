@@ -36,9 +36,14 @@ export function ConnectGitHub({ returnTo }: { returnTo: string }) {
         );
         setBusy(false);
       }
-    } catch {
+    } catch (err) {
+      const clerkMessage = (
+        err as { errors?: { longMessage?: string; message?: string }[] }
+      )?.errors?.[0];
       setError(
-        "GitHub connection failed to start. The instance may not have the GitHub social connection enabled yet — see your account page.",
+        clerkMessage?.longMessage ??
+          clerkMessage?.message ??
+          "GitHub connection failed to start. The Clerk instance may not have the GitHub social connection enabled yet (Dashboard → SSO connections → GitHub).",
       );
       setBusy(false);
     }
