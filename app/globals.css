@@ -16,16 +16,16 @@
   --forest-200:     #D6E4DC;
 
   /* ===== Paper & ink ===== */
-  --cream:          #F5EFD8;
-  --cream-deep:     #EDE3C2;
-  --paper-lift:     #FBF7E8;   /* inputs, raised cards */
-  --ink:            #3A2818;
-  --ink-deep:       #1F1208;
-  --ink-700:        #5A3F26;
-  --ink-500:        #87694C;
-  --rule:           rgba(58, 40, 24, 0.12);
-  --rule-2:         rgba(58, 40, 24, 0.07);
-  --rule-strong:    rgba(31, 18, 8, 0.4);
+  --cream:          #F8F6F0;
+  --cream-deep:     #EFECE2;
+  --paper-lift:     #FFFFFF;   /* inputs, raised cards */
+  --ink:            #241811;
+  --ink-deep:       #171008;
+  --ink-700:        #4A3A2B;
+  --ink-500:        #78685A;
+  --rule:           rgba(36, 24, 17, 0.14);
+  --rule-2:         rgba(36, 24, 17, 0.08);
+  --rule-strong:    rgba(23, 16, 8, 0.42);
 
   /* ===== Graphite (dark surfaces: code blocks) ===== */
   --graphite-900:   #1B1610;
@@ -40,7 +40,7 @@
   --success-soft:   rgba(31, 77, 63, 0.1);
 
   /* ===== Interaction ===== */
-  --hover:      rgba(58, 40, 24, 0.05);
+  --hover:      rgba(36, 24, 17, 0.05);
   --selected:   rgba(232, 68, 42, 0.08);
   --focus-ring: rgba(232, 68, 42, 0.35);
 
@@ -154,14 +154,14 @@ p { margin: 0; }
    ========================================================================== */
 
 .glass {
-  background: linear-gradient(180deg, rgba(251, 247, 232, 0.72), rgba(245, 239, 216, 0.5));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(248, 246, 240, 0.5));
   backdrop-filter: blur(14px) saturate(115%);
   -webkit-backdrop-filter: blur(14px) saturate(115%);
   border: 1px solid var(--rule);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), var(--shadow-soft);
 }
 .glass-strong {
-  background: linear-gradient(180deg, rgba(251, 247, 232, 0.88), rgba(245, 239, 216, 0.7));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(248, 246, 240, 0.72));
   backdrop-filter: blur(18px) saturate(115%);
   -webkit-backdrop-filter: blur(18px) saturate(115%);
   border: 1px solid var(--rule);
@@ -172,8 +172,8 @@ p { margin: 0; }
   display: inline-flex; align-items: center; gap: 7px;
   padding: 7px 14px;
   border-radius: var(--radius-pill);
-  border: 1px solid rgba(31, 18, 8, 0.25);
-  background: linear-gradient(180deg, rgba(251, 247, 232, 0.6), rgba(245, 239, 216, 0.35));
+  border: 1px solid rgba(23, 16, 8, 0.3);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(248, 246, 240, 0.4));
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   font-family: var(--font-sans); font-size: 12.5px; font-weight: 500;
@@ -235,7 +235,7 @@ a.glass-chip:hover, button.glass-chip:hover {
 
 .btn-glass {
   border: 1px solid rgba(31, 18, 8, 0.25);
-  background: rgba(251, 247, 232, 0.4); color: var(--ink-deep);
+  background: rgba(255, 255, 255, 0.5); color: var(--ink-deep);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -262,7 +262,7 @@ a.glass-chip:hover, button.glass-chip:hover {
   border-radius: var(--radius-md);
   transition: border-color var(--dur-fast) var(--ease-soft), box-shadow var(--dur-fast) var(--ease-soft);
 }
-.field:hover { border-color: rgba(58, 40, 24, 0.25); }
+.field:hover { border-color: rgba(36, 24, 17, 0.3); }
 .field:focus-within { border-color: var(--vermilion); box-shadow: 0 0 0 2px var(--focus-ring); }
 .field.is-invalid { border-color: var(--danger); }
 .field > svg { width: 15px; height: 15px; flex-shrink: 0; color: var(--ink-500); }
@@ -282,7 +282,7 @@ a.glass-chip:hover, button.glass-chip:hover {
   resize: vertical; outline: none;
   transition: border-color var(--dur-fast) var(--ease-soft), box-shadow var(--dur-fast) var(--ease-soft);
 }
-.textarea:hover { border-color: rgba(58, 40, 24, 0.25); }
+.textarea:hover { border-color: rgba(36, 24, 17, 0.3); }
 .textarea:focus { border-color: var(--vermilion); box-shadow: 0 0 0 2px var(--focus-ring); }
 .textarea::placeholder { color: var(--ink-500); opacity: 0.7; }
 
@@ -301,7 +301,7 @@ a.glass-chip:hover, button.glass-chip:hover {
   outline: none; cursor: pointer;
   transition: border-color var(--dur-fast) var(--ease-soft), box-shadow var(--dur-fast) var(--ease-soft);
 }
-.select:hover { border-color: rgba(58, 40, 24, 0.25); }
+.select:hover { border-color: rgba(36, 24, 17, 0.3); }
 .select:focus-visible { border-color: var(--vermilion); box-shadow: 0 0 0 2px var(--focus-ring); }
 
 .choice-chip {
@@ -309,7 +309,7 @@ a.glass-chip:hover, button.glass-chip:hover {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 8px 14px;
   border-radius: var(--radius-pill);
-  border: 1px solid rgba(31, 18, 8, 0.3);
+  border: 1px solid rgba(23, 16, 8, 0.35);
   background: transparent;
   font-family: var(--font-sans); font-size: 12.5px; font-weight: 500;
   letter-spacing: -0.01em;
@@ -392,9 +392,9 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 
 .rating { display: inline-flex; align-items: center; gap: 2px; color: var(--vermilion); }
 .rating svg { width: 14px; height: 14px; }
-.rating .is-empty { color: rgba(58, 40, 24, 0.2); }
+.rating .is-empty { color: rgba(36, 24, 17, 0.22); }
 .rating-input { display: inline-flex; gap: 2px; }
-.rating-input button { padding: 2px; border-radius: 4px; color: rgba(58, 40, 24, 0.22); transition: color 80ms ease, transform 80ms ease; }
+.rating-input button { padding: 2px; border-radius: 4px; color: rgba(36, 24, 17, 0.24); transition: color 80ms ease, transform 80ms ease; }
 .rating-input button.is-on { color: var(--vermilion); }
 .rating-input button:hover { transform: scale(1.12); }
 .rating-input button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
@@ -420,7 +420,7 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   border-radius: var(--radius-lg); padding: 14px;
   display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
   border: 1px solid var(--rule);
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.65);
 }
 .stat-tile .stat-v { font-family: var(--font-mono); font-size: 24px; letter-spacing: -0.02em; line-height: 1; }
 .stat-tile .stat-l { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; font-weight: 600; text-transform: uppercase; line-height: 1.3; color: var(--ink-500); }
@@ -433,7 +433,7 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 
 .topbar {
   position: sticky; top: 0; z-index: 200;
-  background: rgba(245, 239, 216, 0.82);
+  background: rgba(248, 246, 240, 0.85);
   backdrop-filter: blur(14px) saturate(115%);
   -webkit-backdrop-filter: blur(14px) saturate(115%);
   border-bottom: 1px solid var(--rule);
@@ -577,7 +577,7 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   display: inline-flex; align-items: center; gap: 5px;
   padding: 3px 10px;
   border-radius: var(--radius-pill);
-  border: 1px solid rgba(31, 18, 8, 0.3);
+  border: 1px solid rgba(23, 16, 8, 0.35);
   background: transparent;
   font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.04em;
   color: var(--ink-700);
@@ -599,7 +599,7 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   border-radius: var(--radius-lg);
   padding: 20px 24px;
   display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.55);
 }
 .claim-band p { font-family: var(--font-sans); color: var(--ink-700); font-size: 13.5px; max-width: 560px; }
 
@@ -667,7 +667,7 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 .readme a:hover { text-decoration: underline; }
 .readme code {
   font-family: var(--font-mono);
-  font-size: 12px; background: var(--cream-deep); padding: 2px 5px; border-radius: 3px;
+  font-size: 12px; background: rgba(36, 24, 17, 0.07); padding: 2px 5px; border-radius: 3px;
 }
 .readme pre {
   background: var(--graphite-900); color: var(--graphite-100);
@@ -776,7 +776,7 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 .empty-state {
   display: flex; flex-direction: column; align-items: center; gap: 12px;
   padding: 40px 24px; text-align: center;
-  border: 1px dashed rgba(58, 40, 24, 0.25); border-radius: var(--radius-lg);
+  border: 1px dashed rgba(36, 24, 17, 0.28); border-radius: var(--radius-lg);
   color: var(--ink-500);
 }
 .empty-state .es-icon {
