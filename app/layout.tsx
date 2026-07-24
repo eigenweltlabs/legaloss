@@ -35,7 +35,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "LegalOSS · Open source for the law",
+    default: "LegalOSS · Open Source Legal Software",
     template: "%s · LegalOSS",
   },
   description:
@@ -44,13 +44,13 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     type: "website",
     url: SITE_URL,
-    title: "LegalOSS · Open source for the law",
+    title: "LegalOSS · Open Source Legal Software",
     description:
       "A community index of open-source legal software. Live GitHub stats, community reviews, maintainer-claimed pages.",
   },
   twitter: {
     card: "summary",
-    title: "LegalOSS · Open source for the law",
+    title: "LegalOSS · Open Source Legal Software",
     description:
       "A community index of open-source legal software. Live GitHub stats, community reviews, maintainer-claimed pages.",
   },
