@@ -731,7 +731,9 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   margin: 0 0 1.2em;
 }
 .readme pre code { background: transparent; padding: 0; color: inherit; }
-.readme img { display: inline-block; max-width: 100%; border-radius: 3px; }
+/* height:auto keeps aspect ratio when GitHub's explicit width/height
+   attributes are capped by max-width on small screens. */
+.readme img { display: inline-block; max-width: 100%; height: auto; border-radius: 3px; }
 .readme ul, .readme ol { padding-left: 24px; margin: 0 0 1em; }
 .readme li { margin-bottom: 4px; }
 .readme blockquote {
