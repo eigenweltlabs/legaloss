@@ -866,16 +866,21 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
    ========================================================================== */
 
 .featured-strip {
-  position: relative;
-  margin-bottom: 16px;
-  overflow: hidden;
+  margin-bottom: 22px;
 }
 .featured-eyebrow {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
   letter-spacing: 0.18em; text-transform: uppercase;
   color: var(--vermilion);
+}
+/* The fades live on the viewport so the label above stays crisp. */
+.featured-viewport {
+  position: relative;
+  overflow: hidden;
+  /* Room for the hover lift + card shadow without clipping. */
+  padding: 2px 0 4px;
 }
 .featured-track {
   display: flex; gap: 10px;
@@ -884,19 +889,19 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 .featured-track.is-animated {
   animation: featured-scroll calc(var(--featured-count, 3) * 9s) linear infinite;
 }
-.featured-strip:hover .featured-track.is-animated,
-.featured-strip:focus-within .featured-track.is-animated {
+.featured-viewport:hover .featured-track.is-animated,
+.featured-viewport:focus-within .featured-track.is-animated {
   animation-play-state: paused;
 }
 /* Edge fades so cards slip in and out of the cream instead of hard-clipping. */
-.featured-strip::before,
-.featured-strip::after {
+.featured-viewport::before,
+.featured-viewport::after {
   content: "";
   position: absolute; top: 0; bottom: 0; width: 36px; z-index: 1;
   pointer-events: none;
 }
-.featured-strip::before { left: 0; background: linear-gradient(90deg, var(--cream), transparent); }
-.featured-strip::after { right: 0; background: linear-gradient(270deg, var(--cream), transparent); }
+.featured-viewport::before { left: 0; background: linear-gradient(90deg, var(--cream), transparent); }
+.featured-viewport::after { right: 0; background: linear-gradient(270deg, var(--cream), transparent); }
 .featured-card {
   display: flex; align-items: center; gap: 10px;
   padding: 9px 16px 9px 10px;
@@ -928,7 +933,7 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   to { transform: translateX(-50%); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .featured-strip { overflow-x: auto; }
+  .featured-viewport { overflow-x: auto; }
   .featured-track.is-animated { animation: none; }
 }
 
