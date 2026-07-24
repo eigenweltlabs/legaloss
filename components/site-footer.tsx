@@ -14,6 +14,7 @@ export function SiteFooter() {
           <Link href="/categories">Categories</Link>
           <Link href="/submit">Submit</Link>
           <Link href="/about">About</Link>
+          <Link href="/privacy">Privacy</Link>
           <Link href="/imprint">Imprint</Link>
         </nav>
         <span className="footer-credit">
