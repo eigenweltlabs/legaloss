@@ -196,6 +196,17 @@ export default async function ProjectPage({ params }: { params: Params }) {
               <IconGitHub />
               GitHub
             </a>
+            {(project.websiteUrl ?? stats?.homepage) && (
+              <a
+                href={project.websiteUrl ?? stats?.homepage ?? ""}
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-secondary"
+              >
+                <IconExternal />
+                Website
+              </a>
+            )}
             {isClaimant ? (
               <Link
                 href={`/projects/${project.owner}/${project.repo}/edit`}

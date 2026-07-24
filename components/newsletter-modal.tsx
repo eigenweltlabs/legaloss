@@ -4,9 +4,7 @@ import { useEffect, useState } from "react";
 import { NewsletterForm } from "@/components/newsletter-form";
 
 const DISMISSED_KEY = "loss-nl-dismissed";
-const CONSENT_KEY = "loss-consent";
-const CONSENT_EVENT = "loss-consent-change";
-const SHOW_DELAY_MS = 6000;
+const SHOW_DELAY_MS = 4000;
 
 function readStorage(key: string): string | null {
   try {
@@ -16,36 +14,17 @@ function readStorage(key: string): string | null {
   }
 }
 
-function consentDecided(): boolean {
-  const consent = readStorage(CONSENT_KEY);
-  return consent === "granted" || consent === "denied";
-}
-
-/** First-visit newsletter invite. Sits bottom-right so it never overlaps the
-    consent banner (bottom-left) and only appears once consent is settled. */
+/** First-visit newsletter invite, a few seconds after landing. Sits
+    bottom-right so it never overlaps the consent banner (bottom-left). */
 export function NewsletterModal() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     if (readStorage(DISMISSED_KEY) === "1") return;
-
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    const startTimer = () => {
-      if (timer !== null) return;
-      timer = setTimeout(() => {
-        if (readStorage(DISMISSED_KEY) !== "1") setVisible(true);
-      }, SHOW_DELAY_MS);
-    };
-
-    if (consentDecided()) {
-      startTimer();
-    } else {
-      window.addEventListener(CONSENT_EVENT, startTimer);
-    }
-    return () => {
-      window.removeEventListener(CONSENT_EVENT, startTimer);
-      if (timer !== null) clearTimeout(timer);
-    };
+    const timer = setTimeout(() => {
+      if (readStorage(DISMISSED_KEY) !== "1") setVisible(true);
+    }, SHOW_DELAY_MS);
+    return () => clearTimeout(timer);
   }, []);
 
   const dismiss = () => {
