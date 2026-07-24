@@ -55,7 +55,7 @@ export default async function HomePage({
       <div className="dir-head">
         <div>
           <h1 className="display-m">
-            {activeCat ? activeCat.name : "Open source for the law."}
+            {activeCat ? activeCat.name : "Open Source Legal Software."}
           </h1>
           <p className="dir-sub">
             {activeCat?.blurb ??
