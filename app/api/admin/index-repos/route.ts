@@ -44,6 +44,10 @@ type RepoResult = {
   message?: string;
 };
 
+const deleteSchema = z.object({
+  repos: z.array(z.string().min(1)).min(1).max(200),
+});
+
 /** Constant-time Bearer token check; a length mismatch is a plain reject. */
 function isAuthorized(header: string | null, token: string): boolean {
   const match = header?.match(/^Bearer (.+)$/i);
@@ -61,6 +65,55 @@ async function alreadyIndexed(fullNameKey: string): Promise<boolean> {
     .where(eq(projects.fullNameKey, fullNameKey))
     .limit(1);
   return Boolean(rows[0]);
+}
+
+/** Remove entries from the index; child rows (stats, categories, stars, …) cascade. */
+export async function DELETE(request: Request) {
+  const token = process.env.ADMIN_API_TOKEN;
+  if (!token) {
+    return NextResponse.json(
+      { error: "ADMIN_API_TOKEN is not configured; this endpoint is disabled." },
+      { status: 401 },
+    );
+  }
+  if (!isAuthorized(request.headers.get("authorization"), token)) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
+  let payload: unknown;
+  try {
+    payload = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+  }
+  const body = deleteSchema.safeParse(payload);
+  if (!body.success) {
+    return NextResponse.json(
+      { error: body.error.issues[0]?.message ?? "Invalid request body." },
+      { status: 400 },
+    );
+  }
+
+  const results: { repo: string; status: "removed" | "missing" | "error" }[] = [];
+  for (const repo of body.data.repos) {
+    const parsed = parseGitHubUrl(repo);
+    if (!parsed) {
+      results.push({ repo, status: "error" });
+      continue;
+    }
+    const removed = await db
+      .delete(projects)
+      .where(eq(projects.fullNameKey, `${parsed.owner}/${parsed.repo}`.toLowerCase()))
+      .returning({ id: projects.id });
+    results.push({ repo, status: removed.length > 0 ? "removed" : "missing" });
+  }
+
+  revalidatePath("/");
+  revalidatePath("/projects");
+  return NextResponse.json({
+    results,
+    removed: results.filter((r) => r.status === "removed").length,
+  });
 }
 
 export async function POST(request: Request) {
