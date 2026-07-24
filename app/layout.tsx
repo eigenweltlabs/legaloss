@@ -5,8 +5,11 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 import { db } from "@/lib/db";
 import { projectStats } from "@/lib/db/schema";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { ConsentBanner } from "@/components/consent-banner";
+import { PostHogAnalytics } from "@/components/posthog-analytics";
 import "./globals.css";
 
 const bigShoulders = Big_Shoulders({
@@ -29,12 +32,27 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "LegalOSS · Open source for the law",
     template: "%s · LegalOSS",
   },
   description:
     "A community index of open-source legal software. Live GitHub stats, community reviews, maintainer-claimed pages.",
+  openGraph: {
+    siteName: SITE_NAME,
+    type: "website",
+    url: SITE_URL,
+    title: "LegalOSS · Open source for the law",
+    description:
+      "A community index of open-source legal software. Live GitHub stats, community reviews, maintainer-claimed pages.",
+  },
+  twitter: {
+    card: "summary",
+    title: "LegalOSS · Open source for the law",
+    description:
+      "A community index of open-source legal software. Live GitHub stats, community reviews, maintainer-claimed pages.",
+  },
 };
 
 export default async function RootLayout({
@@ -58,6 +76,8 @@ export default async function RootLayout({
           <SiteHeader trackedStars={trackedStars} />
           <main>{children}</main>
           <SiteFooter />
+          <ConsentBanner />
+          <PostHogAnalytics />
         </body>
       </html>
     </ClerkProvider>

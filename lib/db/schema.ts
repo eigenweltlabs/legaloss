@@ -36,9 +36,16 @@ export const projects = sqliteTable(
     /** Short editorial description; editable by the claimant only. */
     tagline: text("tagline"),
     websiteUrl: text("website_url"),
+    /** Longer maintainer-authored writeup, shown above the GitHub README. */
+    maintainerNote: text("maintainer_note"),
     submittedById: text("submitted_by_id").references(() => users.id),
     claimedById: text("claimed_by_id").references(() => users.id),
     claimedAt: integer("claimed_at", { mode: "timestamp" }),
+    /** Editorial pick, set by site admins; drives the homepage rotator and newsletter. */
+    featured: integer("featured", { mode: "boolean" }).notNull().default(false),
+    featuredAt: integer("featured_at", { mode: "timestamp" }),
+    /** Set when a featured project has gone out in a newsletter issue. */
+    featuredAnnouncedAt: integer("featured_announced_at", { mode: "timestamp" }),
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
       .default(sql`(unixepoch())`),
@@ -49,6 +56,7 @@ export const projects = sqliteTable(
   (t) => [
     uniqueIndex("projects_full_name_key_unique").on(t.fullNameKey),
     index("projects_claimed_by_idx").on(t.claimedById),
+    index("projects_featured_idx").on(t.featured),
   ],
 );
 

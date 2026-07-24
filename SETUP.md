@@ -33,6 +33,24 @@ keyless mode.
    by the org.
 4. **Optional `GITHUB_TOKEN`** — fine-grained PAT, public repos, read-only.
    Raises the API budget for stats refresh from 60/h to 5,000/h.
+5. **PostHog** — create a project (EU cloud) in the PostHog org, enable
+   **Settings → Cookieless server hash mode** (required by
+   `cookieless_mode: "on_reject"`), then set `NEXT_PUBLIC_POSTHOG_KEY` in
+   `.env.local` and as a GitHub Actions secret. Absent key = analytics off.
+6. **Brevo newsletter** — run `BREVO_API_KEY=… pnpm newsletter:setup` once (from
+   a network allowed under Brevo → Security → Authorised IPs); it creates the
+   "LegalOSS" list and prints `BREVO_LIST_ID`. Set both as env vars locally and
+   as GitHub Actions secrets. Issues go out with `pnpm newsletter:send`
+   (`--dry-run` to preview) against the production `DATABASE_PATH`.
+7. **Site admins** — set `ADMIN_USER_IDS` (comma-separated Clerk user ids)
+   locally and as a GitHub Actions secret. Admins get the Feature button on
+   project pages; featured projects rotate on the homepage and feed the
+   newsletter.
+8. **Backfill / bulk indexing** — set `ADMIN_API_TOKEN` (locally and as a
+   GitHub Actions secret), then POST the curated repo list — kept outside the
+   repo on purpose — to `/api/admin/index-repos` with the Bearer token
+   (idempotent; already-indexed repos come back as `exists`):
+   `curl -X POST https://legal-oss.com/api/admin/index-repos -H "Authorization: Bearer $ADMIN_API_TOKEN" -H "Content-Type: application/json" -d '{"repos":[{"repo":"owner/name","categories":["platforms"],"tagline":"Short blurb"}]}'`
 
 ## Verification status (last local QA)
 

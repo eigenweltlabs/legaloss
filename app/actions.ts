@@ -14,6 +14,7 @@ import {
   reviews,
   stars,
 } from "@/lib/db/schema";
+import { isAdminUser } from "@/lib/admin";
 import { autoCategorize } from "@/lib/auto-categories";
 import { fetchRepo, parseGitHubUrl } from "@/lib/github";
 import { verifyRepoOwnership } from "@/lib/github-ownership";
@@ -411,6 +412,36 @@ export async function releaseClaim(
   return { ok: true };
 }
 
+/* ============================== Featured (admin only) ============================== */
+
+export async function toggleFeatured(
+  projectId: number,
+): Promise<{ ok: true; featured: boolean } | ActionError> {
+  const userId = await ensureCurrentUser();
+  if (!userId || !isAdminUser(userId)) {
+    return fail("Only site admins can feature projects.");
+  }
+
+  const project = await getProjectById(projectId);
+  if (!project) return fail("Project not found.");
+
+  const featured = !project.featured;
+  await db
+    .update(projects)
+    .set({
+      featured,
+      featuredAt: featured ? new Date() : null,
+      // Unfeaturing resets the announcement, so featuring again later lands
+      // the project in the next newsletter issue.
+      featuredAnnouncedAt: featured ? undefined : null,
+      updatedAt: new Date(),
+    })
+    .where(eq(projects.id, projectId));
+
+  revalidateProject(project);
+  return { ok: true, featured };
+}
+
 /* ============================== Edit (claimant only) ============================== */
 
 const editSchema = z.object({
@@ -424,6 +455,7 @@ const editSchema = z.object({
     .max(300)
     .optional()
     .or(z.literal("")),
+  maintainerNote: z.string().trim().max(4000).optional(),
   categorySlugs: z.array(z.string()).min(1, "Pick at least one category.").max(4),
 });
 
@@ -454,6 +486,7 @@ export async function updateProject(
       name: body.data.name,
       tagline: body.data.tagline || null,
       websiteUrl: body.data.websiteUrl || null,
+      maintainerNote: body.data.maintainerNote || null,
       updatedAt: new Date(),
     })
     .where(eq(projects.id, project.id));

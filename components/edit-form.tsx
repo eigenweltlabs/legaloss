@@ -20,6 +20,7 @@ export function EditForm({
     name: string;
     tagline: string;
     websiteUrl: string;
+    maintainerNote: string;
     categorySlugs: string[];
   };
 }) {
@@ -27,6 +28,7 @@ export function EditForm({
   const [name, setName] = useState(initial.name);
   const [tagline, setTagline] = useState(initial.tagline);
   const [websiteUrl, setWebsiteUrl] = useState(initial.websiteUrl);
+  const [maintainerNote, setMaintainerNote] = useState(initial.maintainerNote);
   const [selected, setSelected] = useState<string[]>(initial.categorySlugs);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -51,6 +53,7 @@ export function EditForm({
         name,
         tagline: tagline || undefined,
         websiteUrl: websiteUrl || "",
+        maintainerNote: maintainerNote || undefined,
         categorySlugs: selected,
       });
       if (result.ok) router.push(result.path);
@@ -108,6 +111,25 @@ export function EditForm({
             onChange={(e) => setWebsiteUrl(e.target.value)}
           />
         </div>
+      </div>
+
+      <div>
+        <label className="form-label" htmlFor="maintainer-note">
+          Maintainer&apos;s note
+        </label>
+        <textarea
+          id="maintainer-note"
+          className="textarea"
+          maxLength={4000}
+          rows={6}
+          placeholder="What it does, who it's for, how to get started — in your own words."
+          value={maintainerNote}
+          onChange={(e) => setMaintainerNote(e.target.value)}
+        />
+        <p className="form-hint">
+          Shown above the README on your project page. Plain text; blank lines
+          start a new paragraph.
+        </p>
       </div>
 
       <div>

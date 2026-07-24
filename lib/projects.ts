@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq, inArray, like, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNotNull, like, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   categories,
@@ -41,14 +41,31 @@ export type ProjectListItem = {
 
 export type SortKey = "gh-stars" | "site-stars" | "rating" | "newest" | "active";
 
+/** Projects pushed within this window count as "active". */
+export const ACTIVE_WINDOW_DAYS = 30;
+
 export async function listProjects(opts: {
   categorySlug?: string;
   q?: string;
   sort?: SortKey;
+  /** Filter to a primary GitHub language, e.g. "Python". */
+  language?: string;
+  /** Filter to an SPDX license id, e.g. "MIT". */
+  license?: string;
+  /** Only projects pushed within ACTIVE_WINDOW_DAYS. */
+  activeOnly?: boolean;
   /** When set, each item carries whether this user has starred it. */
   userId?: string | null;
 } = {}): Promise<ProjectListItem[]> {
-  const { categorySlug, q, sort = "gh-stars", userId = null } = opts;
+  const {
+    categorySlug,
+    q,
+    sort = "gh-stars",
+    language,
+    license,
+    activeOnly = false,
+    userId = null,
+  } = opts;
 
   const siteStarAgg = db
     .select({
@@ -90,6 +107,16 @@ export async function listProjects(opts: {
         like(projects.fullNameKey, needle),
         like(sql`lower(coalesce(${projects.tagline}, ''))`, needle),
         like(sql`lower(coalesce(${projectStats.description}, ''))`, needle),
+      ),
+    );
+  }
+  if (language) conds.push(eq(projectStats.language, language));
+  if (license) conds.push(eq(projectStats.licenseSpdx, license));
+  if (activeOnly) {
+    conds.push(
+      gte(
+        projectStats.pushedAt,
+        new Date(Date.now() - ACTIVE_WINDOW_DAYS * 24 * 60 * 60 * 1000),
       ),
     );
   }
@@ -155,6 +182,83 @@ export async function listProjects(opts: {
     starredByUser: Boolean(r.starredByUser),
     categories: catsByProject.get(r.id) ?? [],
   }));
+}
+
+/** Distinct languages and licenses present in the index, for filter dropdowns. */
+export async function listFilterOptions(): Promise<{
+  languages: string[];
+  licenses: string[];
+}> {
+  const [langRows, licenseRows] = await Promise.all([
+    db
+      .selectDistinct({ v: projectStats.language })
+      .from(projectStats)
+      .where(isNotNull(projectStats.language))
+      .orderBy(asc(projectStats.language)),
+    db
+      .selectDistinct({ v: projectStats.licenseSpdx })
+      .from(projectStats)
+      .where(isNotNull(projectStats.licenseSpdx))
+      .orderBy(asc(projectStats.licenseSpdx)),
+  ]);
+  return {
+    languages: langRows.map((r) => r.v).filter((v): v is string => v !== null),
+    licenses: licenseRows.map((r) => r.v).filter((v): v is string => v !== null),
+  };
+}
+
+export type FeaturedProject = {
+  id: number;
+  owner: string;
+  repo: string;
+  name: string;
+  tagline: string | null;
+  description: string | null;
+  language: string | null;
+  ghStars: number;
+  featuredAt: Date | null;
+  categories: { slug: string; name: string }[];
+};
+
+/** Admin-picked projects for the homepage rotator, newest pick first. */
+export async function listFeaturedProjects(limit = 6): Promise<FeaturedProject[]> {
+  const rows = await db
+    .select({
+      id: projects.id,
+      owner: projects.owner,
+      repo: projects.repo,
+      name: projects.name,
+      tagline: projects.tagline,
+      description: projectStats.description,
+      language: projectStats.language,
+      ghStars: sql<number>`coalesce(${projectStats.stars}, 0)`,
+      featuredAt: projects.featuredAt,
+    })
+    .from(projects)
+    .leftJoin(projectStats, eq(projectStats.projectId, projects.id))
+    .where(eq(projects.featured, true))
+    .orderBy(desc(projects.featuredAt))
+    .limit(limit);
+
+  const cats = rows.length
+    ? await db
+        .select({
+          projectId: projectCategories.projectId,
+          slug: categories.slug,
+          name: categories.name,
+        })
+        .from(projectCategories)
+        .innerJoin(categories, eq(projectCategories.categoryId, categories.id))
+        .where(inArray(projectCategories.projectId, rows.map((r) => r.id)))
+        .orderBy(asc(categories.sort))
+    : [];
+  const catsByProject = new Map<number, { slug: string; name: string }[]>();
+  for (const c of cats) {
+    const list = catsByProject.get(c.projectId) ?? [];
+    list.push({ slug: c.slug, name: c.name });
+    catsByProject.set(c.projectId, list);
+  }
+  return rows.map((r) => ({ ...r, categories: catsByProject.get(r.id) ?? [] }));
 }
 
 export async function getProject(owner: string, repo: string) {

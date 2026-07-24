@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Show, UserButton } from "@clerk/nextjs";
@@ -16,8 +16,6 @@ const LINKS = [
 export function SiteHeader({ trackedStars }: { trackedStars: number }) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
-
-  useEffect(() => setDrawerOpen(false), [pathname]);
 
   return (
     <>
@@ -80,13 +78,17 @@ export function SiteHeader({ trackedStars }: { trackedStars: number }) {
           Close
         </button>
         {LINKS.map((l) => (
-          <Link key={l.href} href={l.href}>
+          <Link key={l.href} href={l.href} onClick={() => setDrawerOpen(false)}>
             {l.label}
           </Link>
         ))}
-        <Link href="/submit">Submit a project</Link>
+        <Link href="/submit" onClick={() => setDrawerOpen(false)}>
+          Submit a project
+        </Link>
         <Show when="signed-out">
-          <Link href="/sign-in">Log in</Link>
+          <Link href="/sign-in" onClick={() => setDrawerOpen(false)}>
+            Log in
+          </Link>
         </Show>
       </div>
     </>

@@ -11,9 +11,16 @@ const SORTS = [
   { value: "active", label: "Recently active" },
 ];
 
-export function BrowseControls() {
+export function BrowseControls({
+  languages,
+  licenses,
+}: {
+  languages: string[];
+  licenses: string[];
+}) {
   const router = useRouter();
   const params = useSearchParams();
+  const activeOnly = params.get("active") === "1";
 
   function update(patch: Record<string, string>) {
     const next = new URLSearchParams(params.toString());
@@ -44,6 +51,42 @@ export function BrowseControls() {
           aria-label="Search the index"
         />
       </form>
+      <button
+        type="button"
+        className={`glass-chip browse-toggle${activeOnly ? " is-active" : ""}`}
+        aria-pressed={activeOnly}
+        title="Only projects pushed in the last 30 days"
+        onClick={() => update({ active: activeOnly ? "" : "1" })}
+      >
+        <span className="dot" />
+        Active
+      </button>
+      <select
+        className="select"
+        aria-label="Filter by language"
+        value={params.get("lang") ?? ""}
+        onChange={(e) => update({ lang: e.target.value })}
+      >
+        <option value="">All languages</option>
+        {languages.map((l) => (
+          <option key={l} value={l}>
+            {l}
+          </option>
+        ))}
+      </select>
+      <select
+        className="select"
+        aria-label="Filter by license"
+        value={params.get("license") ?? ""}
+        onChange={(e) => update({ license: e.target.value })}
+      >
+        <option value="">All licenses</option>
+        {licenses.map((l) => (
+          <option key={l} value={l}>
+            {l}
+          </option>
+        ))}
+      </select>
       <label className="meta-mono" htmlFor="sort" style={{ marginLeft: "auto" }}>
         Sort
       </label>
