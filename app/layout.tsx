@@ -59,10 +59,16 @@ export const metadata: Metadata = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const agg = await db
-    .select({ total: sql<number>`coalesce(sum(${projectStats.stars}), 0)` })
-    .from(projectStats);
-  const trackedStars = Number(agg[0]?.total ?? 0);
+  let trackedStars = 0;
+  try {
+    const agg = await db
+      .select({ total: sql<number>`coalesce(sum(${projectStats.stars}), 0)` })
+      .from(projectStats);
+    trackedStars = Number(agg[0]?.total ?? 0);
+  } catch {
+    // Unmigrated database (static prerender during `next build`): render the
+    // shell without the stat instead of failing the build.
+  }
   return (
     <ClerkProvider
       appearance={clerkAppearance}
