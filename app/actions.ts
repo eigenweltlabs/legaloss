@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { and, eq, inArray } from "drizzle-orm";
+import sanitizeHtml from "sanitize-html";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import {
@@ -9,6 +10,7 @@ import {
   claims,
   comments,
   projectCategories,
+  projectReadmes,
   projects,
   projectStats,
   reviews,
@@ -100,6 +102,13 @@ export async function previewRepo(
 
 const submitSchema = z.object({
   url: z.string().min(1),
+  websiteUrl: z
+    .string()
+    .trim()
+    .url("Website must be a valid URL.")
+    .max(300)
+    .optional()
+    .or(z.literal("")),
 });
 
 export async function submitProject(
@@ -142,6 +151,7 @@ export async function submitProject(
         repo: d.repo,
         fullNameKey: key,
         name: d.repo,
+        websiteUrl: body.data.websiteUrl || null,
         submittedById: userId,
       })
       .returning({ id: projects.id });
@@ -407,6 +417,98 @@ export async function releaseClaim(
     .update(projects)
     .set({ claimedById: null, claimedAt: null, updatedAt: new Date() })
     .where(eq(projects.id, projectId));
+
+  revalidateProject(project);
+  return { ok: true };
+}
+
+/* ============================== README override (claimant only) ============================== */
+
+/**
+ * Server-side allowlist for the maintainer-edited README. Whatever the editor
+ * sends, only this survives — scripts, styles, and event handlers never reach
+ * the database.
+ */
+const README_SANITIZE: sanitizeHtml.IOptions = {
+  allowedTags: [
+    ...sanitizeHtml.defaults.allowedTags,
+    "img",
+    "h1",
+    "h2",
+    "details",
+    "summary",
+  ],
+  allowedAttributes: {
+    ...sanitizeHtml.defaults.allowedAttributes,
+    a: ["href", "name"],
+    img: ["src", "alt", "width", "height"],
+    "*": ["align"],
+  },
+  allowedSchemes: ["http", "https", "mailto"],
+  transformTags: {
+    a: sanitizeHtml.simpleTransform("a", { rel: "noreferrer", target: "_blank" }),
+  },
+};
+
+const readmeSchema = z.object({
+  projectId: z.number().int(),
+  html: z.string().max(300_000, "That README is too large."),
+});
+
+export async function updateProjectReadme(
+  input: z.infer<typeof readmeSchema>,
+): Promise<{ ok: true; cleared: boolean } | ActionError> {
+  const userId = await ensureCurrentUser();
+  if (!userId) return fail("Sign in first.");
+
+  const body = readmeSchema.safeParse(input);
+  if (!body.success) return fail(body.error.issues[0]?.message ?? "Invalid input.");
+
+  const project = await getProjectById(body.data.projectId);
+  if (!project) return fail("Project not found.");
+  if (project.claimedById !== userId) {
+    return fail("Only the verified maintainer can edit the README.");
+  }
+
+  const clean = sanitizeHtml(body.data.html, README_SANITIZE).trim();
+  // An effectively empty document clears the override back to the GitHub README.
+  const isEmpty = sanitizeHtml(clean, { allowedTags: [], allowedAttributes: {} }).trim() === "";
+  const customHtml = isEmpty ? null : clean;
+
+  await db
+    .insert(projectReadmes)
+    .values({
+      projectId: project.id,
+      html: null,
+      customHtml,
+      customUpdatedAt: customHtml ? new Date() : null,
+      fetchedAt: new Date(0), // marks the GitHub cache stale so it refreshes on view
+    })
+    .onConflictDoUpdate({
+      target: projectReadmes.projectId,
+      set: { customHtml, customUpdatedAt: customHtml ? new Date() : null },
+    });
+
+  revalidateProject(project);
+  return { ok: true, cleared: isEmpty };
+}
+
+export async function resetProjectReadme(
+  projectId: number,
+): Promise<{ ok: true } | ActionError> {
+  const userId = await ensureCurrentUser();
+  if (!userId) return fail("Sign in first.");
+
+  const project = await getProjectById(projectId);
+  if (!project) return fail("Project not found.");
+  if (project.claimedById !== userId) {
+    return fail("Only the verified maintainer can edit the README.");
+  }
+
+  await db
+    .update(projectReadmes)
+    .set({ customHtml: null, customUpdatedAt: null })
+    .where(eq(projectReadmes.projectId, project.id));
 
   revalidateProject(project);
   return { ok: true };

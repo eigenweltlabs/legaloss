@@ -333,6 +333,19 @@ export async function ensureFreshStats(project: {
   return fresh[0];
 }
 
+/** Maintainer README override, if any. */
+export async function getCustomReadme(projectId: number) {
+  const rows = await db
+    .select({
+      customHtml: projectReadmes.customHtml,
+      customUpdatedAt: projectReadmes.customUpdatedAt,
+    })
+    .from(projectReadmes)
+    .where(eq(projectReadmes.projectId, projectId))
+    .limit(1);
+  return rows[0] ?? { customHtml: null, customUpdatedAt: null };
+}
+
 export async function ensureFreshReadme(project: {
   id: number;
   owner: string;

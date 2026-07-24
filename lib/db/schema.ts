@@ -89,6 +89,9 @@ export const projectReadmes = sqliteTable("project_readmes", {
     .primaryKey()
     .references(() => projects.id, { onDelete: "cascade" }),
   html: text("html"),
+  /** Maintainer-authored override (sanitized HTML); shown instead of the GitHub README when set. */
+  customHtml: text("custom_html"),
+  customUpdatedAt: integer("custom_updated_at", { mode: "timestamp" }),
   fetchedAt: integer("fetched_at", { mode: "timestamp" })
     .notNull()
     .default(sql`(unixepoch())`),
