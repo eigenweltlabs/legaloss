@@ -27,10 +27,11 @@ export function FeaturedRotator({ items }: { items: FeaturedRotatorItem[] }) {
   return (
     <section className="featured-strip" aria-label="Featured projects">
       <span className="featured-eyebrow">Featured</span>
-      <div
-        className={`featured-track${animated ? " is-animated" : ""}`}
-        style={{ "--featured-count": items.length } as React.CSSProperties}
-      >
+      <div className="featured-viewport">
+        <div
+          className={`featured-track${animated ? " is-animated" : ""}`}
+          style={{ "--featured-count": items.length } as React.CSSProperties}
+        >
         {loop.map((it, i) => {
           const clone = i >= items.length;
           return (
@@ -61,6 +62,7 @@ export function FeaturedRotator({ items }: { items: FeaturedRotatorItem[] }) {
             </Link>
           );
         })}
+        </div>
       </div>
     </section>
   );
