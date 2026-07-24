@@ -667,7 +667,10 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 34px;
   align-items: start;
 }
-@media (max-width: 960px) { .detail-grid { grid-template-columns: 1fr; } }
+/* minmax(0, …), not 1fr: a plain 1fr track has min-size auto, so one long
+   unbreakable README line (a <pre> or URL) would blow the column out to its
+   max-content width and push the page past the viewport. */
+@media (max-width: 960px) { .detail-grid { grid-template-columns: minmax(0, 1fr); } }
 
 .side-panel { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 84px; }
 @media (max-width: 960px) { .side-panel { position: static; } }
@@ -720,8 +723,10 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   font-size: 12px; background: rgba(36, 24, 17, 0.07); padding: 2px 5px; border-radius: 3px;
 }
 .readme pre {
+  max-width: 100%;
   background: var(--graphite-900); color: var(--graphite-100);
   border-radius: var(--radius-lg); padding: 16px 18px; overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   font-size: 12px; line-height: 1.6;
   margin: 0 0 1.2em;
 }
@@ -734,11 +739,16 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   border-left: 3px solid rgba(232, 68, 42, 0.4);
   color: var(--ink-700);
 }
-.readme table { border-collapse: collapse; margin: 0 0 1.2em; display: block; overflow-x: auto; }
+.readme table {
+  border-collapse: collapse; margin: 0 0 1.2em;
+  display: block; max-width: 100%; overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 .readme th, .readme td { border: 1px solid var(--rule); padding: 7px 12px; font-size: 13px; }
 .readme th { background: var(--cream-deep); font-weight: 600; text-align: left; }
 .readme hr { border: 0; border-top: 1px solid var(--rule); margin: 1.6em 0; }
 .readme details { margin-bottom: 1em; }
+.readme summary { cursor: pointer; padding: 4px 0; }
 .readme .anchor { display: none; }
 .readme video { max-width: 100%; max-height: 420px; border-radius: 3px; background: var(--graphite-900); }
 .readme-video-link {
@@ -762,7 +772,7 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   margin-top: clamp(44px, 6vh, 72px);
   align-items: start;
 }
-@media (max-width: 1080px) { .social-grid { grid-template-columns: 1fr; } }
+@media (max-width: 1080px) { .social-grid { grid-template-columns: minmax(0, 1fr); } }
 
 .social-section { min-width: 0; }
 .social-head {
@@ -1163,6 +1173,21 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 
 /* Anchor jumps (README table of contents) land below the sticky topbar. */
 .readme h1, .readme h2, .readme h3, .readme h4 { scroll-margin-top: 76px; }
+
+/* README on phones: graphite code slabs bleed edge-to-edge for extra columns
+   (article only — the same class also skins the maintainer editor surface,
+   which must stay inside its box), and heading sizes step down a notch. */
+@media (max-width: 720px) {
+  article.readme pre {
+    /* Wider than the column on purpose; the base max-width: 100% would cap it. */
+    max-width: calc(100% + 40px);
+    margin-left: -20px; margin-right: -20px;
+    padding: 14px 20px;
+    border-radius: 0;
+  }
+  .readme h1 { font-size: 21px; }
+  .readme h2 { font-size: 18px; }
+}
 
 /* Submit form: repo URL + check button, stacking on narrow screens. */
 .repo-check-row { display: flex; align-items: center; gap: 10px; }
