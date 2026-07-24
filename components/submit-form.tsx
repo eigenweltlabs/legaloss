@@ -51,8 +51,8 @@ export function SubmitForm() {
         <label className="form-label" htmlFor="repo-url">
           GitHub repository
         </label>
-        <div className="cluster" style={{ flexWrap: "nowrap" }}>
-          <div className="field" style={{ flex: 1 }}>
+        <div className="repo-check-row">
+          <div className="field">
             <IconGitHub />
             <input
               id="repo-url"

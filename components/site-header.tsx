@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Show, UserButton } from "@clerk/nextjs";
@@ -16,6 +16,21 @@ const LINKS = [
 export function SiteHeader({ trackedStars }: { trackedStars: number }) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // The drawer covers the page; the page must not keep scrolling under it.
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDrawerOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [drawerOpen]);
 
   return (
     <>
@@ -61,6 +76,8 @@ export function SiteHeader({ trackedStars }: { trackedStars: number }) {
             <button
               className="topbar-burger"
               aria-label="Open menu"
+              aria-expanded={drawerOpen}
+              aria-controls="nav-drawer"
               onClick={() => setDrawerOpen(true)}
             >
               <span />
@@ -70,7 +87,13 @@ export function SiteHeader({ trackedStars }: { trackedStars: number }) {
           </div>
         </div>
       </header>
-      <div className={`nav-drawer${drawerOpen ? " open" : ""}`}>
+      <nav
+        id="nav-drawer"
+        className={`nav-drawer${drawerOpen ? " open" : ""}`}
+        aria-label="Menu"
+        // Off-screen links must not be tabbable or read by screen readers.
+        inert={!drawerOpen}
+      >
         <button
           className="nav-drawer-close"
           onClick={() => setDrawerOpen(false)}
@@ -90,7 +113,7 @@ export function SiteHeader({ trackedStars }: { trackedStars: number }) {
             Log in
           </Link>
         </Show>
-      </div>
+      </nav>
     </>
   );
 }
