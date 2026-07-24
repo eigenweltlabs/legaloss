@@ -1,4 +1,3 @@
-import { timingSafeEqual } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { eq, inArray } from "drizzle-orm";
@@ -10,6 +9,7 @@ import {
   projects,
   projectStats,
 } from "@/lib/db/schema";
+import { isAdminRequest } from "@/lib/admin-token";
 import { autoCategorize } from "@/lib/auto-categories";
 import { fetchRepo, parseGitHubUrl } from "@/lib/github";
 
@@ -48,16 +48,6 @@ const deleteSchema = z.object({
   repos: z.array(z.string().min(1)).min(1).max(200),
 });
 
-/** Constant-time Bearer token check; a length mismatch is a plain reject. */
-function isAuthorized(header: string | null, token: string): boolean {
-  const match = header?.match(/^Bearer (.+)$/i);
-  if (!match) return false;
-  const provided = Buffer.from(match[1]);
-  const expected = Buffer.from(token);
-  if (provided.length !== expected.length) return false;
-  return timingSafeEqual(provided, expected);
-}
-
 async function alreadyIndexed(fullNameKey: string): Promise<boolean> {
   const rows = await db
     .select({ id: projects.id })
@@ -69,14 +59,7 @@ async function alreadyIndexed(fullNameKey: string): Promise<boolean> {
 
 /** Remove entries from the index; child rows (stats, categories, stars, …) cascade. */
 export async function DELETE(request: Request) {
-  const token = process.env.ADMIN_API_TOKEN;
-  if (!token) {
-    return NextResponse.json(
-      { error: "ADMIN_API_TOKEN is not configured; this endpoint is disabled." },
-      { status: 401 },
-    );
-  }
-  if (!isAuthorized(request.headers.get("authorization"), token)) {
+  if (!isAdminRequest(request)) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
@@ -117,14 +100,7 @@ export async function DELETE(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const token = process.env.ADMIN_API_TOKEN;
-  if (!token) {
-    return NextResponse.json(
-      { error: "ADMIN_API_TOKEN is not configured; this endpoint is disabled." },
-      { status: 401 },
-    );
-  }
-  if (!isAuthorized(request.headers.get("authorization"), token)) {
+  if (!isAdminRequest(request)) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 

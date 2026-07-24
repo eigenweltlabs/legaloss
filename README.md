@@ -93,7 +93,8 @@ numbers (`?loss-internal=0` clears it).
 ## Newsletter
 
 Signups post to `/api/subscribe`, which adds the address to a Brevo list
-(`BREVO_LIST_ID`). `pnpm newsletter:setup` creates the list once;
-`pnpm newsletter:send` composes one issue from all featured-but-unannounced
-projects, sends it as a Brevo campaign, and stamps them announced
-(`--dry-run` previews without sending).
+(`BREVO_LIST_ID`). Issues compose from all featured-but-unannounced projects
+and go out as a Brevo campaign, stamping them announced. For production,
+POST `/api/admin/newsletter` with the admin Bearer token (`{"dryRun": true}`
+previews subject + HTML without sending); `pnpm newsletter:send` does the
+same against a local database.
