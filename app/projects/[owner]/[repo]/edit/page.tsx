@@ -60,6 +60,7 @@ export default async function EditPage({
             name: project.name,
             tagline: project.tagline ?? "",
             websiteUrl: project.websiteUrl ?? "",
+            maintainerNote: project.maintainerNote ?? "",
             categorySlugs: current.map((c) => c.slug),
           }}
         />

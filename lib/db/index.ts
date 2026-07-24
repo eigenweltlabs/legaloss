@@ -12,7 +12,6 @@ const DB_PATH =
   process.env.DATABASE_PATH ?? path.join(process.cwd(), "data", "app.db");
 
 declare global {
-  // eslint-disable-next-line no-var
   var __legalossDb: ReturnType<typeof createDb> | undefined;
 }
 
@@ -23,17 +22,26 @@ function createDb() {
   sqlite.pragma("foreign_keys = ON");
   const database = drizzle(sqlite, { schema });
 
-  // Fresh database (first boot in prod, or wiped local dev): apply the
-  // checked-in migrations and seed baseline content.
+  // Apply checked-in migrations on fresh databases (first boot in prod, or
+  // wiped local dev) and on journal-managed ones (created by this migrator),
+  // so schema changes roll out with a deploy. Databases created via
+  // `drizzle-kit push` carry no journal; contributors stay current with
+  // `pnpm db:push` instead.
   const initialized = sqlite
     .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")
     .get();
-  if (!initialized) {
+  const journaled = sqlite
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='__drizzle_migrations'",
+    )
+    .get();
+  if (!initialized || journaled) {
     const migrationsFolder = path.join(process.cwd(), "drizzle");
     if (fs.existsSync(migrationsFolder)) {
       migrate(database, { migrationsFolder });
     }
   }
+  ensureAdditiveColumns(sqlite);
   // Idempotent on every boot: category upserts are no-ops once present, and
   // the starter seed exits early unless the index is empty (so a rate-limited
   // first boot retries on the next cold start).
@@ -41,14 +49,43 @@ function createDb() {
   return database;
 }
 
+/**
+ * Belt and braces for databases without a migrations journal (managed via
+ * `drizzle-kit push`): additive columns land here idempotently, so pulling a
+ * newer schema never breaks an existing database at boot.
+ */
+function ensureAdditiveColumns(sqlite: Database.Database) {
+  const cols = new Set(
+    (sqlite.prepare("PRAGMA table_info(projects)").all() as { name: string }[]).map(
+      (c) => c.name,
+    ),
+  );
+  const additions: [column: string, ddl: string][] = [
+    ["maintainer_note", "ALTER TABLE projects ADD maintainer_note text"],
+    ["featured", "ALTER TABLE projects ADD featured integer DEFAULT false NOT NULL"],
+    ["featured_at", "ALTER TABLE projects ADD featured_at integer"],
+    ["featured_announced_at", "ALTER TABLE projects ADD featured_announced_at integer"],
+  ];
+  for (const [column, ddl] of additions) {
+    if (!cols.has(column)) sqlite.exec(ddl);
+  }
+  sqlite.exec(
+    "CREATE INDEX IF NOT EXISTS projects_featured_idx ON projects (featured)",
+  );
+}
+
 type Db = ReturnType<typeof createDb>;
 
 function bootstrapSeed(database: Db) {
   for (const [i, c] of CATEGORY_SEED.entries()) {
+    // Upsert so taxonomy renames/reorders reach existing databases on deploy.
     database
       .insert(schema.categories)
       .values({ slug: c.slug, name: c.name, blurb: c.blurb, sort: i })
-      .onConflictDoNothing()
+      .onConflictDoUpdate({
+        target: schema.categories.slug,
+        set: { name: c.name, blurb: c.blurb, sort: i },
+      })
       .run();
   }
   if (process.env.SEED_STARTERS === "1") {

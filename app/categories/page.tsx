@@ -26,8 +26,8 @@ export default async function CategoriesPage() {
         <span className="eyebrow">Categories</span>
         <h1 className="display-m">The shape of legal open source.</h1>
         <p className="body-l" style={{ maxWidth: 620 }}>
-          Twelve practice-grounded categories, from running a firm to parsing a
-          citation. Every project carries one to four.
+          Twenty practice-grounded categories, from running a firm to serving
+          statutes over MCP. Every project carries one to four.
         </p>
       </div>
       <div className="project-grid">

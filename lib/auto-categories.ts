@@ -4,6 +4,12 @@
  * submit flow itself takes no curation input.
  */
 const RULES: [slug: string, pattern: RegExp][] = [
+  ["mcp-servers", /\bmcp\b|\bmodel context protocol\b/i],
+  ["agent-skills", /\bagent skills?\b|\bskill\.?md\b|\bskill (packs?|library|collection)\b|\bclaude (code |)(skills?|plugins?)\b/i],
+  ["rules-as-code", /\brules.as.code\b|\bcomputational law\b|\bcatala\b|\bopenfisca\b|\btax.?(calculator|engine)\b|\bsmart legal contract/i],
+  ["rag-retrieval", /\brag\b|\bretrieval\b|\bembeddings?\b|\bvector (search|store|db)\b|\bsemantic search\b/i],
+  ["curated-lists", /\bawesome\b|\bcurated list\b|\blandscape\b/i],
+  ["licensing", /\blicens(e|ing)\b|\bspdx\b|\bterms of service\b|\bip agreement\b|\bsite polic/i],
   ["contracts", /\bcontracts?\b|\bclause|\bredlin|\bcuad\b|\bclm\b/i],
   ["court-data", /\bcourts?\b|\bdockets?\b|\bcase.?law\b|\bjudicial|\bopinions?\b|\bpacer\b/i],
   ["citations", /\bcitations?\b|\bcite\b|\bbluebook\b|\blegal.?parsing\b/i],

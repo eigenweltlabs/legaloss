@@ -10,13 +10,16 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx scripts/seed.ts",
     "db:setup": "drizzle-kit push && tsx scripts/seed.ts",
-    "db:seed-projects": "tsx scripts/seed-projects.ts"
+    "db:seed-projects": "tsx scripts/seed-projects.ts",
+    "newsletter:setup": "tsx scripts/setup-newsletter.ts",
+    "newsletter:send": "tsx scripts/send-newsletter.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.22",
     "better-sqlite3": "^13.0.1",
     "drizzle-orm": "^0.45.2",
     "next": "16.2.11",
+    "posthog-js": "^1.407.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "zod": "^4.4.3"

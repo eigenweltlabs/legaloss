@@ -4,7 +4,9 @@ import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { categories, projectCategories, users } from "@/lib/db/schema";
+import { categories, projectCategories, projectStats, users } from "@/lib/db/schema";
+import { isAdminUser } from "@/lib/admin";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import {
   ensureFreshContributors,
   ensureFreshReadme,
@@ -15,6 +17,7 @@ import {
 import { formatCount, formatDate, timeAgo } from "@/lib/format";
 import { StarButton } from "@/components/star-button";
 import { CommentComposer } from "@/components/comment-composer";
+import { FeatureToggle } from "@/components/feature-toggle";
 import { ReviewComposer } from "@/components/review-composer";
 import { EntryDelete } from "@/components/entry-delete";
 import {
@@ -36,7 +39,35 @@ export async function generateMetadata({
   params: Params;
 }): Promise<Metadata> {
   const { owner, repo } = await params;
-  return { title: `${owner}/${repo}` };
+  const project = await getProject(owner, repo);
+  if (!project) return { title: `${owner}/${repo}` };
+
+  // Cached stats only — metadata must not trigger GitHub calls.
+  const stats = await db
+    .select({ description: projectStats.description })
+    .from(projectStats)
+    .where(eq(projectStats.projectId, project.id))
+    .limit(1)
+    .then((r) => r[0] ?? null);
+  const description =
+    project.tagline ??
+    stats?.description ??
+    `${project.owner}/${project.repo} on ${SITE_NAME}, the community index of open-source legal software.`;
+  const url = `${SITE_URL}/projects/${project.owner}/${project.repo}`;
+
+  return {
+    title: `${project.name} — open-source legal software`,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title: project.name,
+      description,
+      url,
+      siteName: SITE_NAME,
+      type: "website",
+    },
+    twitter: { card: "summary", title: project.name, description },
+  };
 }
 
 export default async function ProjectPage({ params }: { params: Params }) {
@@ -70,6 +101,7 @@ export default async function ProjectPage({ params }: { params: Params }) {
     : null;
 
   const isClaimant = userId !== null && project.claimedById === userId;
+  const isAdmin = isAdminUser(userId);
   const avgRating =
     social.reviews.length > 0
       ? social.reviews.reduce((s, r) => s + r.rating, 0) / social.reviews.length
@@ -79,8 +111,41 @@ export default async function ProjectPage({ params }: { params: Params }) {
     : null;
   const ghUrl = `https://github.com/${project.owner}/${project.repo}`;
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareSourceCode",
+    name: project.name,
+    description: project.tagline ?? stats?.description ?? undefined,
+    url: `${SITE_URL}/projects/${project.owner}/${project.repo}`,
+    codeRepository: ghUrl,
+    programmingLanguage: stats?.language ?? undefined,
+    license: stats?.licenseSpdx
+      ? `https://spdx.org/licenses/${stats.licenseSpdx}`
+      : undefined,
+    dateModified: stats?.pushedAt?.toISOString(),
+    keywords:
+      [...cats.map((c) => c.name), ...(stats?.topics ?? [])].join(", ") ||
+      undefined,
+    ...(avgRating !== null && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: Number(avgRating.toFixed(1)),
+        reviewCount: social.reviews.length,
+        bestRating: 5,
+        worstRating: 1,
+      },
+    }),
+  };
+
   return (
     <div className="container">
+      <script
+        type="application/ld+json"
+        // Escape "<" so repo-sourced text can never close the script tag.
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
       <div className="detail-head">
         <span className="eyebrow">
           {cats.length > 0 ? cats.map((c) => c.name).join(" · ") : "Project"}
@@ -108,6 +173,12 @@ export default async function ProjectPage({ params }: { params: Params }) {
             )}
           </div>
           <div className="detail-actions">
+            {isAdmin && (
+              <FeatureToggle
+                projectId={project.id}
+                initialFeatured={project.featured}
+              />
+            )}
             <StarButton
               projectId={project.id}
               initialStarred={social.starredByUser}
@@ -160,6 +231,14 @@ export default async function ProjectPage({ params }: { params: Params }) {
 
       <div className="detail-grid">
         <div>
+          {project.maintainerNote && (
+            <div className="card maintainer-note">
+              <span className="eyebrow">From the maintainer</span>
+              {project.maintainerNote.split(/\n{2,}/).map((para, i) => (
+                <p key={i}>{para}</p>
+              ))}
+            </div>
+          )}
           {readmeHtml ? (
             <article
               className="readme"
@@ -173,7 +252,7 @@ export default async function ProjectPage({ params }: { params: Params }) {
               </div>
               <h4>No README available</h4>
               <p>
-                GitHub didn't return a README for this repository. View it
+                GitHub didn&apos;t return a README for this repository. View it
                 directly on GitHub instead.
               </p>
               <a href={ghUrl} target="_blank" rel="noreferrer" className="btn btn-secondary">

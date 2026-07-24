@@ -4,3 +4,5 @@ allowBuilds:
   unrs-resolver: true
   esbuild: true
   '@clerk/shared': true
+  # posthog-js transitive dep; its postinstall only prints a funding banner.
+  core-js: false

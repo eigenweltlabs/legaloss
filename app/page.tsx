@@ -3,9 +3,15 @@ import { Suspense } from "react";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { categories } from "@/lib/db/schema";
-import { listProjects, type SortKey } from "@/lib/projects";
+import {
+  listFeaturedProjects,
+  listFilterOptions,
+  listProjects,
+  type SortKey,
+} from "@/lib/projects";
 import { ProjectCard } from "@/components/project-card";
 import { BrowseControls } from "@/components/browse-controls";
+import { FeaturedRotator } from "@/components/featured-rotator";
 import { IconSearch } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -26,15 +32,20 @@ export default async function HomePage({
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q : undefined;
   const category = typeof params.category === "string" ? params.category : undefined;
+  const language = typeof params.lang === "string" ? params.lang : undefined;
+  const license = typeof params.license === "string" ? params.license : undefined;
+  const activeOnly = params.active === "1";
   const sortParam = typeof params.sort === "string" ? params.sort : "gh-stars";
   const sort = (VALID_SORTS as string[]).includes(sortParam)
     ? (sortParam as SortKey)
     : "gh-stars";
 
   const { userId } = await auth();
-  const [items, cats] = await Promise.all([
-    listProjects({ q, categorySlug: category, sort, userId }),
+  const [items, cats, filterOptions, featured] = await Promise.all([
+    listProjects({ q, categorySlug: category, sort, language, license, activeOnly, userId }),
     db.select().from(categories).orderBy(categories.sort),
+    listFilterOptions(),
+    listFeaturedProjects(),
   ]);
   const activeCat = cats.find((c) => c.slug === category);
 
@@ -56,8 +67,13 @@ export default async function HomePage({
         </span>
       </div>
 
+      <FeaturedRotator items={featured} />
+
       <Suspense>
-        <BrowseControls />
+        <BrowseControls
+          languages={filterOptions.languages}
+          licenses={filterOptions.licenses}
+        />
       </Suspense>
 
       <div className="cat-row">
@@ -100,7 +116,8 @@ export default async function HomePage({
           <span className="eyebrow">For maintainers</span>
           <p>
             Build one of these? Verify ownership through GitHub and take over
-            your project's page: tagline, categories, maintainer mark.
+            your project&apos;s page: tagline, categories, maintainer&apos;s
+            note.
           </p>
         </div>
         <Link href="/about" className="btn btn-secondary">

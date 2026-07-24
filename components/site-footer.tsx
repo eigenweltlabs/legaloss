@@ -1,8 +1,12 @@
 import Link from "next/link";
+import { NewsletterForm } from "@/components/newsletter-form";
 
 export function SiteFooter() {
   return (
     <footer className="site-footer">
+      <div className="container footer-newsletter">
+        <NewsletterForm />
+      </div>
       <div className="container footer-inner">
         <span className="footer-brand">LegalOSS</span>
         <nav className="footer-links">
