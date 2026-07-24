@@ -53,9 +53,7 @@ export function ConsentBanner() {
       <div className="consent-card glass-strong">
         <span className="eyebrow">Cookies</span>
         <p className="consent-body">
-          We use cookies to understand how the index is used. Decline and
-          you&apos;re still counted — anonymously, without anything stored on
-          your device.
+          We use cookies to understand how the index is used.
         </p>
         <div className="consent-actions">
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => decide("denied")}>
@@ -65,8 +63,8 @@ export function ConsentBanner() {
             Accept
           </button>
         </div>
-        <Link href="/imprint" className="consent-link">
-          Privacy &amp; imprint →
+        <Link href="/privacy" className="consent-link">
+          Privacy policy →
         </Link>
       </div>
     </div>
