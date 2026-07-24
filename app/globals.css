@@ -862,64 +862,74 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 .cluster { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
 /* ==========================================================================
-   Featured rotator — editorial band above the search bar
+   Featured strip — compact cards drifting horizontally above the search bar
    ========================================================================== */
 
-.featured-band {
+.featured-strip {
   position: relative;
-  display: flex; flex-direction: column; gap: 8px;
-  padding: 20px 24px 16px 27px;
-  border-radius: var(--radius-lg);
   margin-bottom: 16px;
   overflow: hidden;
 }
-.featured-band::before {
-  content: "";
-  position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
-  background: var(--vermilion);
-}
 .featured-eyebrow {
+  display: block;
+  margin-bottom: 8px;
   font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
   letter-spacing: 0.18em; text-transform: uppercase;
   color: var(--vermilion);
 }
-.featured-slide {
-  display: flex; flex-direction: column; gap: 6px; min-width: 0;
-  animation: featured-in var(--dur-base) var(--ease-soft);
+.featured-track {
+  display: flex; gap: 10px;
+  width: max-content;
 }
-.featured-name {
-  font-family: var(--font-display);
-  font-size: clamp(24px, 3.2vw, 34px); font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.01em; line-height: 1.05;
-  color: var(--ink-deep);
-  transition: color var(--dur-fast) var(--ease-soft);
+.featured-track.is-animated {
+  animation: featured-scroll calc(var(--featured-count, 3) * 9s) linear infinite;
 }
-.featured-slide:hover .featured-name { color: var(--vermilion); }
-.featured-desc {
-  font-family: var(--font-sans); font-size: 14px; line-height: 1.5;
-  color: var(--ink-700); max-width: 640px;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-  overflow: hidden;
+.featured-strip:hover .featured-track.is-animated,
+.featured-strip:focus-within .featured-track.is-animated {
+  animation-play-state: paused;
 }
-.featured-meta {
-  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-500);
+/* Edge fades so cards slip in and out of the cream instead of hard-clipping. */
+.featured-strip::before,
+.featured-strip::after {
+  content: "";
+  position: absolute; top: 0; bottom: 0; width: 36px; z-index: 1;
+  pointer-events: none;
 }
-.featured-stat { display: inline-flex; align-items: center; gap: 5px; }
-.featured-stat svg { width: 12px; height: 12px; color: var(--amber); }
-.featured-arrow { width: 14px; height: 14px; color: var(--vermilion); }
-.featured-dots { position: absolute; top: 18px; right: 20px; display: flex; gap: 6px; }
-.featured-dot {
-  width: 8px; height: 8px; border-radius: var(--radius-pill);
-  border: 1px solid var(--rule-strong); background: transparent;
-  padding: 0; cursor: pointer;
-  transition: background var(--dur-fast) var(--ease-soft), border-color var(--dur-fast) var(--ease-soft);
+.featured-strip::before { left: 0; background: linear-gradient(90deg, var(--cream), transparent); }
+.featured-strip::after { right: 0; background: linear-gradient(270deg, var(--cream), transparent); }
+.featured-card {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 16px 9px 10px;
+  background: var(--paper-lift);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  transition: border-color var(--dur-fast) var(--ease-soft), transform var(--dur-fast) var(--ease-soft);
 }
-.featured-dot:hover { border-color: var(--vermilion); }
-.featured-dot.is-active { background: var(--vermilion); border-color: var(--vermilion); }
-@keyframes featured-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+.featured-card:hover { border-color: var(--rule-strong); transform: translateY(-1px); }
+.featured-card img {
+  width: 36px; height: 36px; display: block;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--rule-2);
+}
+.fc-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fc-name {
+  font-family: var(--font-sans); font-size: 13.5px; font-weight: 600;
+  letter-spacing: -0.01em; color: var(--ink-deep); white-space: nowrap;
+}
+.fc-meta {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font-mono); font-size: 11px; color: var(--ink-500);
+  white-space: nowrap;
+}
+.fc-meta svg { width: 11px; height: 11px; color: var(--amber); flex-shrink: 0; }
+@keyframes featured-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .featured-strip { overflow-x: auto; }
+  .featured-track.is-animated { animation: none; }
 }
 
 /* Browse-bar "Active" toggle */
@@ -981,7 +991,6 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 
 @media (max-width: 640px) {
   .consent { left: 12px; right: 12px; bottom: 12px; max-width: none; }
-  .featured-dots { position: static; margin-top: 4px; }
   .newsletter-row { flex-direction: column; }
 }
 
@@ -993,3 +1002,108 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   *, *::before, *::after { animation: none !important; transition: none !important; }
   html { scroll-behavior: auto; }
 }
+
+/* ==========================================================================
+   README editor (maintainer WYSIWYG)
+   ========================================================================== */
+
+.readme-editor {
+  background: var(--paper-lift);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: border-color var(--dur-fast) var(--ease-soft);
+}
+.readme-editor:focus-within { border-color: rgba(36, 24, 17, 0.3); }
+
+.readme-editor-toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--rule-2);
+}
+.readme-editor-toolbar button {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 28px; padding: 0 9px;
+  font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.02em;
+  color: var(--ink-700);
+  border-radius: var(--radius-sm);
+  transition: background var(--dur-fast) var(--ease-soft), color var(--dur-fast) var(--ease-soft);
+}
+.readme-editor-toolbar button:hover { background: var(--hover); color: var(--ink-deep); }
+.readme-editor-toolbar button:focus-visible { box-shadow: 0 0 0 2px var(--focus-ring); }
+.readme-editor-toolbar button:disabled { opacity: 0.35; cursor: default; background: none; }
+.readme-editor-toolbar button.is-active { color: var(--vermilion); background: var(--selected); }
+.readme-editor-sep { width: 1px; height: 16px; margin: 0 5px; background: var(--rule-2); }
+
+.readme-editor-linkrow {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px;
+  background: var(--cream);
+  border-bottom: 1px solid var(--rule-2);
+}
+.readme-editor-linkrow input {
+  flex: 1; min-width: 0; height: 31px; padding: 0 11px;
+  background: var(--paper-lift);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+  outline: none;
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0; color: var(--ink-deep);
+  transition: border-color var(--dur-fast) var(--ease-soft), box-shadow var(--dur-fast) var(--ease-soft);
+}
+.readme-editor-linkrow input:focus { border-color: var(--vermilion); box-shadow: 0 0 0 2px var(--focus-ring); }
+.readme-editor-linkrow input::placeholder { color: var(--ink-500); opacity: 0.7; }
+
+.readme-editor-surface { padding: 18px 20px; }
+.readme-editor-surface .ProseMirror { min-height: 320px; outline: none; }
+.readme-editor-surface .ProseMirror:focus { outline: none; }
+
+/* README-EDITOR-STYLES-END */
+
+/* ==========================================================================
+   Newsletter surfaces (modal, inline bands)
+   ========================================================================== */
+
+.nl-modal {
+  position: fixed; right: 20px; bottom: 20px; z-index: 55;
+  max-width: 380px;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-overlay);
+}
+.nl-modal-close {
+  position: absolute; top: 10px; right: 10px;
+  border: none; background: none; padding: 4px; cursor: pointer;
+  font-size: 16px; line-height: 1; color: var(--ink-500);
+}
+.nl-modal-close:hover { color: var(--vermilion); }
+.nl-modal-title { font-size: 16px; }
+.nl-modal-body {
+  font-family: var(--font-sans); font-size: 13px; line-height: 1.55;
+  color: var(--ink-700); margin: 0;
+}
+.nl-modal-no {
+  align-self: flex-start;
+  border: none; background: none; padding: 0; cursor: pointer;
+  font-family: var(--font-sans); font-size: 12px; color: var(--ink-500);
+}
+.nl-modal-no:hover { color: var(--vermilion); }
+
+.newsletter-band {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 20px 24px;
+  border-radius: var(--radius-lg);
+  margin: 26px 0;
+}
+.newsletter-band p {
+  font-family: var(--font-sans); font-size: 14px; line-height: 1.55;
+  color: var(--ink-700); margin: 0;
+}
+
+@media (max-width: 640px) {
+  /* Sits above the consent banner's spot; on small screens the two cards can
+     stack visually, which is acceptable since the modal waits for consent. */
+  .nl-modal { left: 12px; right: 12px; bottom: 12px; max-width: none; }
+}
+
+/* NEWSLETTER-SURFACES-STYLES-END */

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { NewsletterForm } from "@/components/newsletter-form";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,15 @@ export default function AboutPage() {
             project&apos;s name, tagline, website, and categories. Everyone
             else can star, review, and comment.
           </p>
+        </div>
+
+        <div className="stack-8">
+          <h3 style={{ fontSize: 16 }}>Stay in the loop</h3>
+          <p className="body">
+            Every few weeks we send one email listing the newly featured
+            open-source legal projects. No noise, unsubscribe any time.
+          </p>
+          <NewsletterForm />
         </div>
 
         <div className="cluster" style={{ paddingTop: 8 }}>

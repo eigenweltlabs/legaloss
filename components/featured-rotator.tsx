@@ -1,11 +1,6 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatCount } from "@/lib/format";
-import { IconArrowRight, IconStar } from "@/components/icons";
-
-const ROTATE_MS = 6000;
+import { IconStar } from "@/components/icons";
 
 export type FeaturedRotatorItem = {
   id: number;
@@ -20,73 +15,53 @@ export type FeaturedRotatorItem = {
 };
 
 /**
- * Editorial showcase above the search bar. Cycles through admin-featured
- * projects; pauses on hover/focus and sits still under reduced motion.
+ * Compact featured cards drifting horizontally above the search bar. Pure CSS
+ * marquee: the list renders twice and slides by 50%; pauses on hover and goes
+ * static (scrollable) under reduced motion.
  */
 export function FeaturedRotator({ items }: { items: FeaturedRotatorItem[] }) {
-  const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-
-  useEffect(() => {
-    if (items.length < 2 || paused) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const timer = setInterval(
-      () => setIndex((i) => (i + 1) % items.length),
-      ROTATE_MS,
-    );
-    return () => clearInterval(timer);
-  }, [items.length, paused]);
-
   if (items.length === 0) return null;
-  const it = items[index % items.length];
+  const animated = items.length > 1;
+  const loop = animated ? [...items, ...items] : items;
 
   return (
-    <section
-      className="featured-band glass"
-      aria-label="Featured projects"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocus={() => setPaused(true)}
-      onBlur={() => setPaused(false)}
-    >
+    <section className="featured-strip" aria-label="Featured projects">
       <span className="featured-eyebrow">Featured</span>
-      {/* Key forces a remount per slide so the fade-in replays. */}
-      <Link
-        key={it.id}
-        href={`/projects/${it.owner}/${it.repo}`}
-        className="featured-slide"
+      <div
+        className={`featured-track${animated ? " is-animated" : ""}`}
+        style={{ "--featured-count": items.length } as React.CSSProperties}
       >
-        <span className="featured-name">{it.name}</span>
-        <span className="featured-desc">
-          {it.tagline ?? it.description ?? `${it.owner}/${it.repo}`}
-        </span>
-        <span className="featured-meta">
-          <span className="featured-stat">
-            <IconStar filled />
-            {formatCount(it.ghStars)}
-          </span>
-          {it.language && <span className="featured-stat">{it.language}</span>}
-          {it.categories[0] && (
-            <span className="featured-stat">{it.categories[0].name}</span>
-          )}
-          <IconArrowRight className="featured-arrow" />
-        </span>
-      </Link>
-      {items.length > 1 && (
-        <div className="featured-dots" role="tablist" aria-label="Featured projects">
-          {items.map((item, i) => (
-            <button
-              key={item.id}
-              type="button"
-              role="tab"
-              aria-selected={i === index}
-              aria-label={`Show ${item.name}`}
-              className={`featured-dot${i === index ? " is-active" : ""}`}
-              onClick={() => setIndex(i)}
-            />
-          ))}
-        </div>
-      )}
+        {loop.map((it, i) => {
+          const clone = i >= items.length;
+          return (
+            <Link
+              key={`${it.id}-${i}`}
+              href={`/projects/${it.owner}/${it.repo}`}
+              className="featured-card"
+              aria-hidden={clone || undefined}
+              tabIndex={clone ? -1 : undefined}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`https://github.com/${it.owner}.png?size=80`}
+                alt=""
+                width={36}
+                height={36}
+                loading="lazy"
+              />
+              <span className="fc-text">
+                <span className="fc-name">{it.name}</span>
+                <span className="fc-meta">
+                  <IconStar filled />
+                  {formatCount(it.ghStars)}
+                  {it.language ? ` · ${it.language}` : ""}
+                  {it.categories[0] ? ` · ${it.categories[0].name}` : ""}
+                </span>
+              </span>
+            </Link>
+          );
+        })}
+      </div>
     </section>
   );
 }

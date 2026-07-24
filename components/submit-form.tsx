@@ -10,6 +10,7 @@ import { IconCheck, IconGitHub, IconSearch, IconStar } from "@/components/icons"
 export function SubmitForm() {
   const router = useRouter();
   const [url, setUrl] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
   const [preview, setPreview] = useState<RepoPreview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [existingPath, setExistingPath] = useState<string | null>(null);
@@ -34,7 +35,7 @@ export function SubmitForm() {
   function submit() {
     setError(null);
     startSubmitting(async () => {
-      const result = await submitProject({ url });
+      const result = await submitProject({ url, websiteUrl: websiteUrl || "" });
       if (result.ok) {
         router.push(result.path);
       } else {
@@ -121,6 +122,25 @@ export function SubmitForm() {
                 {preview.licenseSpdx && <span>{preview.licenseSpdx}</span>}
               </div>
             </div>
+          </div>
+
+          <div>
+            <label className="form-label" htmlFor="submit-website">
+              Website <span style={{ color: "var(--ink-500)", fontWeight: 400 }}>(optional)</span>
+            </label>
+            <div className="field">
+              <input
+                id="submit-website"
+                type="url"
+                maxLength={300}
+                placeholder="https://…"
+                value={websiteUrl}
+                onChange={(e) => setWebsiteUrl(e.target.value)}
+              />
+            </div>
+            <p className="form-hint">
+              The project&apos;s own site or docs, shown on its page.
+            </p>
           </div>
 
           <div className="row-between">

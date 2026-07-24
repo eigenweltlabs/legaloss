@@ -12,6 +12,7 @@ import {
 import { ProjectCard } from "@/components/project-card";
 import { BrowseControls } from "@/components/browse-controls";
 import { FeaturedRotator } from "@/components/featured-rotator";
+import { NewsletterForm } from "@/components/newsletter-form";
 import { IconSearch } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -110,6 +111,12 @@ export default async function HomePage({
           </Link>
         </div>
       )}
+
+      <section className="newsletter-band glass">
+        <span className="eyebrow">Newsletter</span>
+        <p>A list of new open-source legal projects, every few weeks.</p>
+        <NewsletterForm />
+      </section>
 
       <div className="claim-band">
         <div className="stack-4">

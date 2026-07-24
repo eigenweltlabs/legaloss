@@ -15,6 +15,13 @@
       "when": 1784887022621,
       "tag": "0001_featured-and-maintainer-note",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1784890954057,
+      "tag": "0002_custom-readme",
+      "breakpoints": true
     }
   ]
 }

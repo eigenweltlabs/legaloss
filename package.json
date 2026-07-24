@@ -16,12 +16,16 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.22",
+    "@tiptap/extension-image": "^3.28.0",
+    "@tiptap/react": "^3.28.0",
+    "@tiptap/starter-kit": "^3.28.0",
     "better-sqlite3": "^13.0.1",
     "drizzle-orm": "^0.45.2",
     "next": "16.2.11",
     "posthog-js": "^1.407.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "sanitize-html": "^2.17.6",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -30,6 +34,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/sanitize-html": "^2.16.1",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.11",

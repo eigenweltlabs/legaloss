@@ -11,6 +11,7 @@ import {
   ensureFreshContributors,
   ensureFreshReadme,
   ensureFreshStats,
+  getCustomReadme,
   getProject,
   getProjectSocial,
 } from "@/lib/projects";
@@ -96,9 +97,10 @@ export default async function ProjectPage({ params }: { params: Params }) {
       : Promise.resolve(null),
     ensureFreshContributors(project),
   ]);
-  const readmeHtml = stats
-    ? await ensureFreshReadme(project, stats.defaultBranch ?? "main")
-    : null;
+  const custom = await getCustomReadme(project.id);
+  const readmeHtml =
+    custom.customHtml ??
+    (stats ? await ensureFreshReadme(project, stats.defaultBranch ?? "main") : null);
 
   const isClaimant = userId !== null && project.claimedById === userId;
   const isAdmin = isAdminUser(userId);
@@ -240,11 +242,26 @@ export default async function ProjectPage({ params }: { params: Params }) {
             </div>
           )}
           {readmeHtml ? (
-            <article
-              className="readme"
-              // GitHub renders and sanitizes this HTML server-side.
-              dangerouslySetInnerHTML={{ __html: readmeHtml }}
-            />
+            <>
+              <article
+                className="readme"
+                // GitHub-rendered or maintainer-authored; both are sanitized
+                // server-side before they get here.
+                dangerouslySetInnerHTML={{ __html: readmeHtml }}
+              />
+              {custom.customHtml && (
+                <p className="form-hint" style={{ marginTop: 10 }}>
+                  README curated by the maintainer
+                  {custom.customUpdatedAt
+                    ? ` · ${formatDate(custom.customUpdatedAt)}`
+                    : ""}
+                  {" · "}
+                  <a href={`${ghUrl}#readme`} target="_blank" rel="noreferrer" className="accent">
+                    original on GitHub →
+                  </a>
+                </p>
+              )}
+            </>
           ) : (
             <div className="empty-state">
               <div className="es-icon">

@@ -9,6 +9,7 @@ import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ConsentBanner } from "@/components/consent-banner";
+import { NewsletterModal } from "@/components/newsletter-modal";
 import { PostHogAnalytics } from "@/components/posthog-analytics";
 import "./globals.css";
 
@@ -77,6 +78,7 @@ export default async function RootLayout({
           <main>{children}</main>
           <SiteFooter />
           <ConsentBanner />
+          <NewsletterModal />
           <PostHogAnalytics />
         </body>
       </html>

@@ -55,19 +55,27 @@ function createDb() {
  * newer schema never breaks an existing database at boot.
  */
 function ensureAdditiveColumns(sqlite: Database.Database) {
-  const cols = new Set(
-    (sqlite.prepare("PRAGMA table_info(projects)").all() as { name: string }[]).map(
-      (c) => c.name,
-    ),
-  );
-  const additions: [column: string, ddl: string][] = [
-    ["maintainer_note", "ALTER TABLE projects ADD maintainer_note text"],
-    ["featured", "ALTER TABLE projects ADD featured integer DEFAULT false NOT NULL"],
-    ["featured_at", "ALTER TABLE projects ADD featured_at integer"],
-    ["featured_announced_at", "ALTER TABLE projects ADD featured_announced_at integer"],
-  ];
-  for (const [column, ddl] of additions) {
-    if (!cols.has(column)) sqlite.exec(ddl);
+  const additions: Record<string, [column: string, ddl: string][]> = {
+    projects: [
+      ["maintainer_note", "ALTER TABLE projects ADD maintainer_note text"],
+      ["featured", "ALTER TABLE projects ADD featured integer DEFAULT false NOT NULL"],
+      ["featured_at", "ALTER TABLE projects ADD featured_at integer"],
+      ["featured_announced_at", "ALTER TABLE projects ADD featured_announced_at integer"],
+    ],
+    project_readmes: [
+      ["custom_html", "ALTER TABLE project_readmes ADD custom_html text"],
+      ["custom_updated_at", "ALTER TABLE project_readmes ADD custom_updated_at integer"],
+    ],
+  };
+  for (const [table, columns] of Object.entries(additions)) {
+    const cols = new Set(
+      (sqlite.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).map(
+        (c) => c.name,
+      ),
+    );
+    for (const [column, ddl] of columns) {
+      if (!cols.has(column)) sqlite.exec(ddl);
+    }
   }
   sqlite.exec(
     "CREATE INDEX IF NOT EXISTS projects_featured_idx ON projects (featured)",

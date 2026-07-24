@@ -4,8 +4,14 @@ import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { categories, projectCategories } from "@/lib/db/schema";
-import { getProject } from "@/lib/projects";
+import {
+  ensureFreshReadme,
+  ensureFreshStats,
+  getCustomReadme,
+  getProject,
+} from "@/lib/projects";
 import { EditForm } from "@/components/edit-form";
+import { ReadmeEditor } from "@/components/readme-editor";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +32,16 @@ export default async function EditPage({
     // Editing is claimant-only; everyone else goes through the claim flow.
     redirect(`${projectPath}/claim`);
   }
+
+  // The editor starts from the maintainer override when one exists, otherwise
+  // from the cached GitHub README rendering.
+  const stats = await ensureFreshStats(project);
+  const custom = await getCustomReadme(project.id);
+  const github = stats
+    ? await ensureFreshReadme(project, stats.defaultBranch ?? "main")
+    : null;
+  const initialHtml = custom.customHtml ?? github ?? "";
+  const hasOverride = Boolean(custom.customHtml);
 
   const [cats, current] = await Promise.all([
     db.select().from(categories).orderBy(categories.sort),
@@ -64,6 +80,19 @@ export default async function EditPage({
             categorySlugs: current.map((c) => c.slug),
           }}
         />
+
+        <div style={{ marginTop: 48 }}>
+          <h2 className="form-label">README</h2>
+          <p className="form-hint" style={{ margin: "0 0 14px" }}>
+            Shown on the project page instead of the GitHub README. Reset any
+            time.
+          </p>
+          <ReadmeEditor
+            projectId={project.id}
+            initialHtml={initialHtml}
+            hasOverride={hasOverride}
+          />
+        </div>
       </div>
     </div>
   );
