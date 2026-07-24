@@ -22,6 +22,13 @@ function createDb() {
   sqlite.pragma("foreign_keys = ON");
   const database = drizzle(sqlite, { schema });
 
+  // `next build` collects page data in parallel workers, each importing this
+  // module against a throwaway database — racing migrations there can only
+  // hurt. Migrations and seeding belong to server start.
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    return database;
+  }
+
   // Apply checked-in migrations on fresh databases (first boot in prod, or
   // wiped local dev) and on journal-managed ones (created by this migrator),
   // so schema changes roll out with a deploy. Databases created via
