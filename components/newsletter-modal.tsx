@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { NewsletterForm } from "@/components/newsletter-form";
 
 const DISMISSED_KEY = "loss-nl-dismissed";
+const CONSENT_KEY = "loss-consent";
+const CONSENT_CHANGE_EVENT = "loss-consent-change";
 const SHOW_DELAY_MS = 4000;
 
 function readStorage(key: string): string | null {
@@ -14,17 +16,27 @@ function readStorage(key: string): string | null {
   }
 }
 
-/** First-visit newsletter invite, a few seconds after landing. Sits
-    bottom-right so it never overlaps the consent banner (bottom-left). */
+/** First-visit newsletter invite, a few seconds after landing. It waits for
+    the cookie banner to be answered before arming its timer — on phones both
+    cards are full-width at the bottom and would otherwise stack. */
 export function NewsletterModal() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     if (readStorage(DISMISSED_KEY) === "1") return;
-    const timer = setTimeout(() => {
-      if (readStorage(DISMISSED_KEY) !== "1") setVisible(true);
-    }, SHOW_DELAY_MS);
-    return () => clearTimeout(timer);
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const arm = () => {
+      timer = setTimeout(() => {
+        if (readStorage(DISMISSED_KEY) !== "1") setVisible(true);
+      }, SHOW_DELAY_MS);
+    };
+    const consent = readStorage(CONSENT_KEY);
+    if (consent === "granted" || consent === "denied") arm();
+    else window.addEventListener(CONSENT_CHANGE_EVENT, arm, { once: true });
+    return () => {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener(CONSENT_CHANGE_EVENT, arm);
+    };
   }, []);
 
   const dismiss = () => {

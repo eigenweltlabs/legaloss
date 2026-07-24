@@ -87,12 +87,14 @@ export function BrowseControls({
           </option>
         ))}
       </select>
-      <label className="meta-mono" htmlFor="sort" style={{ marginLeft: "auto" }}>
+      {/* The label hides on mobile, so the select carries its own name. */}
+      <label className="meta-mono browse-sort-label" htmlFor="sort">
         Sort
       </label>
       <select
         id="sort"
         className="select"
+        aria-label="Sort projects"
         value={params.get("sort") ?? "gh-stars"}
         onChange={(e) => update({ sort: e.target.value })}
       >

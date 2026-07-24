@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { sql } from "drizzle-orm";
 import { Big_Shoulders, Inter, JetBrains_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -31,6 +31,15 @@ const inter = Inter({
   variable: "--font-inter",
   display: "swap",
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // Lets fixed elements extend into the notch/home-indicator areas, which
+  // the safe-area insets in globals.css then account for.
+  viewportFit: "cover",
+  themeColor: "#F8F6F0",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
