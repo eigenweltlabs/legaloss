@@ -1094,17 +1094,6 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 }
 .nl-modal-no:hover { color: var(--vermilion); }
 
-.newsletter-band {
-  display: flex; flex-direction: column; gap: 10px;
-  padding: 20px 24px;
-  border-radius: var(--radius-lg);
-  margin: 26px 0;
-}
-.newsletter-band p {
-  font-family: var(--font-sans); font-size: 14px; line-height: 1.55;
-  color: var(--ink-700); margin: 0;
-}
-
 @media (max-width: 640px) {
   /* Sits above the consent banner's spot; on small screens the two cards can
      stack visually, which is acceptable since the modal waits for consent. */
