@@ -6,7 +6,8 @@ const WHOAMI = "https://huggingface.co/api/whoami-v2";
 export type HfOwnershipResult =
   | {
       owned: true;
-      method: "user-match" | "org-membership";
+      /** "user-match", "org-membership", or "org-<role>" (e.g. org-admin). */
+      method: string;
       hfUsername: string;
     }
   | {
@@ -60,21 +61,24 @@ export async function verifyHfOwnership(
   if (username && username.toLowerCase() === target) {
     return { owned: true, method: "user-match", hfUsername: username };
   }
-  // Only admin/write members can maintain an org's repos — mere membership
-  // (read/contributor) must not grant a claim, matching the GitHub side's
-  // per-repo `permissions.admin` bar.
-  const adminOfOrg = (me.orgs ?? []).some(
-    (o) =>
-      (o.name ?? "").toLowerCase() === target &&
-      o.name != null &&
-      (o.roleInOrg === "admin" || o.roleInOrg === "write"),
+
+  // Org-owned repo: the org only appears in whoami-v2 once the user granted the
+  // app access to it (the read-repos scope + picking the org on the authorize
+  // screen), so its presence already proves membership. Grant unless HF tells
+  // us the member is explicitly low-privileged (read/contributor); admin/write
+  // — or no role at all, when HF omits it over OAuth — can maintain it.
+  const org = (me.orgs ?? []).find(
+    (o) => o.name != null && o.name.toLowerCase() === target,
   );
-  if (adminOfOrg) {
-    return {
-      owned: true,
-      method: "org-membership",
-      hfUsername: username ?? owner,
-    };
+  if (org) {
+    const role = (org.roleInOrg ?? "").toLowerCase();
+    if (role !== "read" && role !== "contributor") {
+      return {
+        owned: true,
+        method: role ? `org-${role}` : "org-membership",
+        hfUsername: username ?? owner,
+      };
+    }
   }
   return { owned: false, reason: "not-owner", hfUsername: username };
 }
