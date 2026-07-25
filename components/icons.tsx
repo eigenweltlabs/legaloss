@@ -82,6 +82,31 @@ export function IconGitHub(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function IconHuggingFace(props: SVGProps<SVGSVGElement>) {
+  // Simplified 🤗 mark: a round face with two eyes and a smile.
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden fill="none" {...props}>
+      <circle cx="10" cy="10" r="7.4" fill="#FFD21E" stroke="currentColor" strokeWidth="1.1" />
+      <circle cx="7.4" cy="8.6" r="1.05" fill="currentColor" />
+      <circle cx="12.6" cy="8.6" r="1.05" fill="currentColor" />
+      <path
+        d="M6.7 11.6c.7 1.5 2 2.3 3.3 2.3s2.6-.8 3.3-2.3"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+export function IconDownload(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M10 3v9m0 0 3.2-3.2M10 12 6.8 8.8M4 15.5h12" />
+    </svg>
+  );
+}
+
 export function IconScale(props: SVGProps<SVGSVGElement>) {
   return (
     <svg {...base(props)}>

@@ -49,7 +49,7 @@ export function SubmitForm() {
     <div className="stack-24">
       <div>
         <label className="form-label" htmlFor="repo-url">
-          GitHub repository
+          GitHub or Hugging Face repository
         </label>
         <div className="repo-check-row">
           <div className="field">
@@ -57,7 +57,7 @@ export function SubmitForm() {
             <input
               id="repo-url"
               type="text"
-              placeholder="github.com/owner/repo"
+              placeholder="github.com/owner/repo or huggingface.co/owner/model"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => {
@@ -78,6 +78,9 @@ export function SubmitForm() {
             {checking ? "Checking…" : "Check"}
           </button>
         </div>
+        <p className="form-hint">
+          Paste a GitHub repo, or a Hugging Face model, dataset, or space.
+        </p>
         {error && (
           <p className="form-error">
             {error}{" "}
@@ -101,8 +104,11 @@ export function SubmitForm() {
                   </strong>
                   <span className="badge badge-success">
                     <IconCheck />
-                    Found on GitHub
+                    {preview.source === "huggingface" ? "Found on Hugging Face" : "Found on GitHub"}
                   </span>
+                  {preview.source === "huggingface" && preview.sourceType && (
+                    <span className="status-pill is-hf">{preview.sourceType}</span>
+                  )}
                   {preview.archived && (
                     <span className="status-pill is-archived">Archived</span>
                   )}
@@ -114,10 +120,17 @@ export function SubmitForm() {
                 )}
               </div>
               <div className="cluster mono" style={{ fontSize: 12, color: "var(--muted-2)" }}>
-                <span className="cluster" style={{ gap: 4 }}>
+                <span
+                  className="cluster"
+                  style={{ gap: 4 }}
+                  title={preview.source === "huggingface" ? "Likes" : "Stars"}
+                >
                   <IconStar filled style={{ width: 13, height: 13 }} />
                   {formatCount(preview.stars)}
                 </span>
+                {preview.source === "huggingface" && preview.downloads > 0 && (
+                  <span title="Downloads">↓ {formatCount(preview.downloads)}</span>
+                )}
                 {preview.language && <span>{preview.language}</span>}
                 {preview.licenseSpdx && <span>{preview.licenseSpdx}</span>}
               </div>

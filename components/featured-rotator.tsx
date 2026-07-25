@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { formatCount } from "@/lib/format";
+import { projectHref } from "@/lib/sources";
 import { IconStar } from "@/components/icons";
 
 export type FeaturedRotatorItem = {
   id: number;
+  source: string;
+  sourceType: string | null;
   owner: string;
   repo: string;
   name: string;
@@ -34,22 +37,29 @@ export function FeaturedRotator({ items }: { items: FeaturedRotatorItem[] }) {
         >
         {loop.map((it, i) => {
           const clone = i >= items.length;
+          const isHf = it.source === "huggingface";
           return (
             <Link
               key={`${it.id}-${i}`}
-              href={`/projects/${it.owner}/${it.repo}`}
+              href={projectHref(it)}
               className="featured-card"
               aria-hidden={clone || undefined}
               tabIndex={clone ? -1 : undefined}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`https://github.com/${it.owner}.png?size=80`}
-                alt=""
-                width={36}
-                height={36}
-                loading="lazy"
-              />
+              {isHf ? (
+                <span className="fc-avatar fc-avatar-hf" aria-hidden>
+                  {it.owner.charAt(0).toUpperCase()}
+                </span>
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={`https://github.com/${it.owner}.png?size=80`}
+                  alt=""
+                  width={36}
+                  height={36}
+                  loading="lazy"
+                />
+              )}
               <span className="fc-text">
                 <span className="fc-name">{it.name}</span>
                 <span className="fc-meta">

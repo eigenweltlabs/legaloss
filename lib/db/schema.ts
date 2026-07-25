@@ -27,10 +27,18 @@ export const projects = sqliteTable(
   "projects",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    /** Canonical owner/repo as returned by the GitHub API. */
+    /** Where the repo lives: "github" or "huggingface". */
+    source: text("source").notNull().default("github"),
+    /** For Hugging Face: "model" | "dataset" | "space". Null for GitHub. */
+    sourceType: text("source_type"),
+    /** Canonical owner/repo as returned by the source API. */
     owner: text("owner").notNull(),
     repo: text("repo").notNull(),
-    /** lower(owner/repo) — GitHub names are case-insensitive, so uniqueness lives here. */
+    /**
+     * Uniqueness key. GitHub keeps the bare lower(owner/repo) it always had;
+     * Hugging Face is prefixed lower(hf:type:owner/name) so a GitHub repo and
+     * an HF repo of the same name never collide.
+     */
     fullNameKey: text("full_name_key").notNull(),
     name: text("name").notNull(),
     /** Short editorial description; editable by the claimant only. */
@@ -65,10 +73,13 @@ export const projectStats = sqliteTable("project_stats", {
   projectId: integer("project_id")
     .primaryKey()
     .references(() => projects.id, { onDelete: "cascade" }),
+  /** GitHub stargazers, or Hugging Face likes. */
   stars: integer("stars").notNull().default(0),
   forks: integer("forks").notNull().default(0),
   openIssues: integer("open_issues").notNull().default(0),
   subscribers: integer("subscribers").notNull().default(0),
+  /** Hugging Face all-time downloads. 0 for GitHub. */
+  downloads: integer("downloads").notNull().default(0),
   language: text("language"),
   licenseSpdx: text("license_spdx"),
   licenseName: text("license_name"),

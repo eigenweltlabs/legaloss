@@ -11,7 +11,8 @@ import {
 } from "@/lib/db/schema";
 import { isAdminRequest } from "@/lib/admin-token";
 import { autoCategorize } from "@/lib/auto-categories";
-import { fetchRepo, parseGitHubUrl } from "@/lib/github";
+import { hfKey } from "@/lib/huggingface";
+import { detectSource, resolveRepo } from "@/lib/index-repo";
 
 /**
  * Token-gated bulk indexing for site admins — the runtime replacement for the
@@ -79,14 +80,18 @@ export async function DELETE(request: Request) {
 
   const results: { repo: string; status: "removed" | "missing" | "error" }[] = [];
   for (const repo of body.data.repos) {
-    const parsed = parseGitHubUrl(repo);
-    if (!parsed) {
+    const detected = detectSource(repo);
+    if (!detected) {
       results.push({ repo, status: "error" });
       continue;
     }
+    const key =
+      detected.source === "huggingface"
+        ? hfKey(detected.type, detected.owner, detected.repo)
+        : `${detected.owner}/${detected.repo}`.toLowerCase();
     const removed = await db
       .delete(projects)
-      .where(eq(projects.fullNameKey, `${parsed.owner}/${parsed.repo}`.toLowerCase()))
+      .where(eq(projects.fullNameKey, key))
       .returning({ id: projects.id });
     results.push({ repo, status: removed.length > 0 ? "removed" : "missing" });
   }
@@ -122,18 +127,22 @@ export async function POST(request: Request) {
   let fetched = false;
 
   for (const entry of body.data.repos) {
-    const parsed = parseGitHubUrl(entry.repo);
-    if (!parsed) {
+    const detected = detectSource(entry.repo);
+    if (!detected) {
       results.push({
         repo: entry.repo,
         status: "error",
-        message: "Not a valid GitHub repository reference.",
+        message: "Not a valid GitHub or Hugging Face repository reference.",
       });
       continue;
     }
 
     // Fast path: skip the API call when already indexed under this name.
-    if (await alreadyIndexed(`${parsed.owner}/${parsed.repo}`.toLowerCase())) {
+    const preKey =
+      detected.source === "huggingface"
+        ? hfKey(detected.type, detected.owner, detected.repo)
+        : `${detected.owner}/${detected.repo}`.toLowerCase();
+    if (await alreadyIndexed(preKey)) {
       results.push({ repo: entry.repo, status: "exists" });
       continue;
     }
@@ -142,28 +151,15 @@ export async function POST(request: Request) {
       await new Promise((resolve) => setTimeout(resolve, FETCH_DELAY_MS));
     }
     fetched = true;
-    const result = await fetchRepo(parsed.owner, parsed.repo);
-    if (result.error) {
-      results.push({
-        repo: entry.repo,
-        status: "error",
-        message: `GitHub ${result.error.status}: ${result.error.message}`,
-      });
+    const resolved = await resolveRepo(detected);
+    if ("error" in resolved) {
+      results.push({ repo: entry.repo, status: "error", message: resolved.error });
       continue;
     }
-    const d = result.data;
-    if (d.isPrivate) {
-      results.push({
-        repo: entry.repo,
-        status: "error",
-        message: "Only public repositories can be indexed.",
-      });
-      continue;
-    }
+    const d = resolved.data;
 
     // The API follows renames, so re-check under the canonical name.
-    const key = d.fullName.toLowerCase();
-    if (await alreadyIndexed(key)) {
+    if (await alreadyIndexed(d.key)) {
       results.push({ repo: entry.repo, status: "exists" });
       continue;
     }
@@ -183,9 +179,11 @@ export async function POST(request: Request) {
       const inserted = await db
         .insert(projects)
         .values({
+          source: d.source,
+          sourceType: d.sourceType,
           owner: d.owner,
           repo: d.repo,
-          fullNameKey: key,
+          fullNameKey: d.key,
           name: d.repo,
           tagline: entry.tagline ?? null,
         })
@@ -199,19 +197,7 @@ export async function POST(request: Request) {
 
     await db.insert(projectStats).values({
       projectId,
-      stars: d.stars,
-      forks: d.forks,
-      openIssues: d.openIssues,
-      subscribers: d.subscribers,
-      language: d.language,
-      licenseSpdx: d.licenseSpdx,
-      licenseName: d.licenseName,
-      topics: d.topics,
-      description: d.description,
-      homepage: d.homepage,
-      defaultBranch: d.defaultBranch,
-      pushedAt: d.pushedAt,
-      archived: d.archived,
+      ...d.stats,
       fetchedAt: new Date(),
     });
     if (catRows.length > 0) {

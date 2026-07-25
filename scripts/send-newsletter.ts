@@ -38,6 +38,8 @@ async function main() {
   const rows = await db
     .select({
       id: schema.projects.id,
+      source: schema.projects.source,
+      sourceType: schema.projects.sourceType,
       owner: schema.projects.owner,
       repo: schema.projects.repo,
       name: schema.projects.name,

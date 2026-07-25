@@ -14,12 +14,20 @@ import {
   users,
 } from "@/lib/db/schema";
 import { fetchContributors, fetchOpenIssueCount, fetchReadmeHtml, fetchRepo } from "@/lib/github";
+import {
+  fetchHfReadmeHtml,
+  fetchHfRepo,
+  hfKey,
+  type HfType,
+} from "@/lib/huggingface";
 
 const STATS_TTL_SECONDS = 60 * 60; // 1 hour
 const README_TTL_SECONDS = 60 * 60 * 24; // 24 hours
 
 export type ProjectListItem = {
   id: number;
+  source: string;
+  sourceType: string | null;
   owner: string;
   repo: string;
   name: string;
@@ -30,6 +38,7 @@ export type ProjectListItem = {
   licenseSpdx: string | null;
   ghStars: number;
   forks: number;
+  downloads: number;
   pushedAt: Date | null;
   archived: boolean;
   siteStars: number;
@@ -132,6 +141,8 @@ export async function listProjects(opts: {
   const rows = await db
     .select({
       id: projects.id,
+      source: projects.source,
+      sourceType: projects.sourceType,
       owner: projects.owner,
       repo: projects.repo,
       name: projects.name,
@@ -142,6 +153,7 @@ export async function listProjects(opts: {
       licenseSpdx: projectStats.licenseSpdx,
       ghStars: sql<number>`coalesce(${projectStats.stars}, 0)`,
       forks: sql<number>`coalesce(${projectStats.forks}, 0)`,
+      downloads: sql<number>`coalesce(${projectStats.downloads}, 0)`,
       pushedAt: projectStats.pushedAt,
       archived: sql<boolean>`coalesce(${projectStats.archived}, 0)`,
       siteStars: sql<number>`coalesce(${siteStarAgg.n}, 0)`,
@@ -209,6 +221,8 @@ export async function listFilterOptions(): Promise<{
 
 export type FeaturedProject = {
   id: number;
+  source: string;
+  sourceType: string | null;
   owner: string;
   repo: string;
   name: string;
@@ -216,6 +230,7 @@ export type FeaturedProject = {
   description: string | null;
   language: string | null;
   ghStars: number;
+  downloads: number;
   featuredAt: Date | null;
   categories: { slug: string; name: string }[];
 };
@@ -225,6 +240,8 @@ export async function listFeaturedProjects(limit = 6): Promise<FeaturedProject[]
   const rows = await db
     .select({
       id: projects.id,
+      source: projects.source,
+      sourceType: projects.sourceType,
       owner: projects.owner,
       repo: projects.repo,
       name: projects.name,
@@ -232,6 +249,7 @@ export async function listFeaturedProjects(limit = 6): Promise<FeaturedProject[]
       description: projectStats.description,
       language: projectStats.language,
       ghStars: sql<number>`coalesce(${projectStats.stars}, 0)`,
+      downloads: sql<number>`coalesce(${projectStats.downloads}, 0)`,
       featuredAt: projects.featuredAt,
     })
     .from(projects)
@@ -271,12 +289,27 @@ export async function getProject(owner: string, repo: string) {
   return row[0] ?? null;
 }
 
-/** Refresh cached GitHub stats when stale. Serves stale data on GitHub errors. */
-export async function ensureFreshStats(project: {
+/** Hugging Face detail lookup, keyed by type + owner + name. */
+export async function getHfProject(type: string, owner: string, repo: string) {
+  if (type !== "model" && type !== "dataset" && type !== "space") return null;
+  const row = await db
+    .select()
+    .from(projects)
+    .where(eq(projects.fullNameKey, hfKey(type, owner, repo)))
+    .limit(1);
+  return row[0] ?? null;
+}
+
+type StatsSubject = {
   id: number;
+  source: string;
+  sourceType: string | null;
   owner: string;
   repo: string;
-}) {
+};
+
+/** Refresh cached upstream stats when stale. Serves stale data on API errors. */
+export async function ensureFreshStats(project: StatsSubject) {
   const existing = await db
     .select()
     .from(projectStats)
@@ -286,31 +319,29 @@ export async function ensureFreshStats(project: {
   const age = stat ? (Date.now() - stat.fetchedAt.getTime()) / 1000 : Infinity;
   if (stat && age < STATS_TTL_SECONDS) return stat;
 
-  const result = await fetchRepo(project.owner, project.repo);
-  if (result.error) return stat; // keep stale cache; GitHub hiccup or rate limit
+  const values = project.source === "huggingface"
+    ? await freshHfStats(project)
+    : await freshGithubStats(project);
+  if (!values) return stat; // keep stale cache on API hiccup / rate limit
 
-  const d = result.data;
-  const issueCount = await fetchOpenIssueCount(project.owner, project.repo);
-  const values = {
-    stars: d.stars,
-    forks: d.forks,
-    openIssues: issueCount ?? d.openIssues,
-    subscribers: d.subscribers,
-    language: d.language,
-    licenseSpdx: d.licenseSpdx,
-    licenseName: d.licenseName,
-    topics: d.topics,
-    description: d.description,
-    homepage: d.homepage,
-    defaultBranch: d.defaultBranch,
-    pushedAt: d.pushedAt,
-    archived: d.archived,
-    fetchedAt: new Date(),
-  };
   await db
     .insert(projectStats)
     .values({ projectId: project.id, ...values })
     .onConflictDoUpdate({ target: projectStats.projectId, set: values });
+
+  const fresh = await db
+    .select()
+    .from(projectStats)
+    .where(eq(projectStats.projectId, project.id))
+    .limit(1);
+  return fresh[0];
+}
+
+async function freshGithubStats(project: StatsSubject) {
+  const result = await fetchRepo(project.owner, project.repo);
+  if (result.error) return null;
+  const d = result.data;
+  const issueCount = await fetchOpenIssueCount(project.owner, project.repo);
 
   // Canonicalize casing if the repo was renamed/transferred on GitHub.
   if (d.owner !== project.owner || d.repo !== project.repo) {
@@ -325,12 +356,47 @@ export async function ensureFreshStats(project: {
       .where(eq(projects.id, project.id));
   }
 
-  const fresh = await db
-    .select()
-    .from(projectStats)
-    .where(eq(projectStats.projectId, project.id))
-    .limit(1);
-  return fresh[0];
+  return {
+    stars: d.stars,
+    forks: d.forks,
+    openIssues: issueCount ?? d.openIssues,
+    subscribers: d.subscribers,
+    downloads: 0,
+    language: d.language,
+    licenseSpdx: d.licenseSpdx,
+    licenseName: d.licenseName,
+    topics: d.topics,
+    description: d.description,
+    homepage: d.homepage,
+    defaultBranch: d.defaultBranch,
+    pushedAt: d.pushedAt,
+    archived: d.archived,
+    fetchedAt: new Date(),
+  };
+}
+
+async function freshHfStats(project: StatsSubject) {
+  const type = (project.sourceType ?? "model") as HfType;
+  const result = await fetchHfRepo(type, project.owner, project.repo);
+  if (result.error) return null;
+  const d = result.data;
+  return {
+    stars: d.likes,
+    forks: 0,
+    openIssues: 0,
+    subscribers: 0,
+    downloads: d.downloads,
+    language: d.pipelineTag ?? d.libraryName,
+    licenseSpdx: d.licenseId,
+    licenseName: d.licenseId,
+    topics: d.tags,
+    description: d.description,
+    homepage: null,
+    defaultBranch: "main",
+    pushedAt: d.lastModified,
+    archived: false,
+    fetchedAt: new Date(),
+  };
 }
 
 /** Maintainer README override, if any. */
@@ -348,6 +414,8 @@ export async function getCustomReadme(projectId: number) {
 
 export async function ensureFreshReadme(project: {
   id: number;
+  source: string;
+  sourceType: string | null;
   owner: string;
   repo: string;
 }, defaultBranch: string) {
@@ -360,7 +428,9 @@ export async function ensureFreshReadme(project: {
   const age = row ? (Date.now() - row.fetchedAt.getTime()) / 1000 : Infinity;
   if (row && age < README_TTL_SECONDS) return row.html;
 
-  const html = await fetchReadmeHtml(project.owner, project.repo, defaultBranch);
+  const html = project.source === "huggingface"
+    ? await fetchHfReadmeHtml((project.sourceType ?? "model") as HfType, project.owner, project.repo)
+    : await fetchReadmeHtml(project.owner, project.repo, defaultBranch);
   if (html === null && row) return row.html; // keep stale on error
 
   await db

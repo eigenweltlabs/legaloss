@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { categories, projects, projectStats } from "@/lib/db/schema";
 import { SITE_URL } from "@/lib/site";
+import { projectHref } from "@/lib/sources";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [projectRows, categoryRows] = await Promise.all([
     db
       .select({
+        source: projects.source,
+        sourceType: projects.sourceType,
         owner: projects.owner,
         repo: projects.repo,
         updatedAt: projects.updatedAt,
@@ -36,7 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const projectEntries: MetadataRoute.Sitemap = projectRows.map((p) => ({
-    url: `${SITE_URL}/projects/${p.owner}/${p.repo}`,
+    url: `${SITE_URL}${projectHref(p)}`,
     lastModified: p.pushedAt ?? p.updatedAt,
     changeFrequency: "weekly",
     priority: 0.8,

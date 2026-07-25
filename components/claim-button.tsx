@@ -8,9 +8,11 @@ import { IconShield } from "@/components/icons";
 export function ClaimButton({
   projectId,
   projectPath,
+  sourceName = "GitHub",
 }: {
   projectId: number;
   projectPath: string;
+  sourceName?: string;
 }) {
   const router = useRouter();
   const [result, setResult] = useState<ClaimResult | null>(null);
@@ -36,7 +38,7 @@ export function ClaimButton({
         disabled={pending}
       >
         <IconShield />
-        {pending ? "Verifying with GitHub…" : "Verify ownership & claim"}
+        {pending ? `Verifying with ${sourceName}…` : "Verify ownership & claim"}
       </button>
       {result &&
         (result.ok ? (

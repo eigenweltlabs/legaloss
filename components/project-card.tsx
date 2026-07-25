@@ -1,8 +1,9 @@
 import Link from "next/link";
 import type { ProjectListItem } from "@/lib/projects";
 import { formatCount, timeAgo } from "@/lib/format";
+import { projectHref } from "@/lib/sources";
 import { CardStar } from "@/components/card-star";
-import { IconFork, IconStar, IconClock } from "@/components/icons";
+import { IconClock, IconDownload, IconFork, IconHuggingFace, IconStar } from "@/components/icons";
 
 export function ProjectCard({
   project,
@@ -12,6 +13,7 @@ export function ProjectCard({
   signedIn: boolean;
 }) {
   const desc = project.tagline ?? project.description;
+  const isHf = project.source === "huggingface";
   return (
     <div className="card card-hover project-card">
       <div className="pc-cat">
@@ -23,7 +25,12 @@ export function ProjectCard({
                 .join(" · ")
             : "Uncategorized"}
         </span>
-        {project.claimedById ? (
+        {isHf ? (
+          <span className="status-pill is-hf" title="Hosted on Hugging Face">
+            <IconHuggingFace />
+            {project.sourceType ?? "model"}
+          </span>
+        ) : project.claimedById ? (
           <span className="status-pill is-claimed" title="Claimed by its maintainer">
             <span className="dot" />
             Maintained
@@ -34,10 +41,7 @@ export function ProjectCard({
       </div>
       <div className="pc-top">
         <div style={{ minWidth: 0 }}>
-          <Link
-            href={`/projects/${project.owner}/${project.repo}`}
-            className="pc-link"
-          >
+          <Link href={projectHref(project)} className="pc-link">
             <span className="pc-name">{project.name}</span>
           </Link>
           <div className="pc-owner">
@@ -47,15 +51,22 @@ export function ProjectCard({
       </div>
       {desc ? <p className="pc-desc">{desc}</p> : <p className="pc-desc" />}
       <div className="pc-meta">
-        <span className="m" title="GitHub stars">
+        <span className="m" title={isHf ? "Hugging Face likes" : "GitHub stars"}>
           <IconStar filled />
           {formatCount(project.ghStars)}
         </span>
-        <span className="m" title="Forks">
-          <IconFork />
-          {formatCount(project.forks)}
-        </span>
-        <span className="m" title="Last push">
+        {isHf ? (
+          <span className="m" title="Downloads">
+            <IconDownload />
+            {formatCount(project.downloads)}
+          </span>
+        ) : (
+          <span className="m" title="Forks">
+            <IconFork />
+            {formatCount(project.forks)}
+          </span>
+        )}
+        <span className="m" title={isHf ? "Last updated" : "Last push"}>
           <IconClock />
           {timeAgo(project.pushedAt)}
         </span>
