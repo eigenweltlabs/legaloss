@@ -29,6 +29,10 @@ export function ConnectHuggingFace({ returnTo }: { returnTo: string }) {
           NonNullable<typeof user>["createExternalAccount"]
         >[0]["strategy"],
         redirectUrl: returnTo,
+        // read-repos is the org-applicable scope: it makes the user's
+        // organizations (and their role) appear in whoami-v2, so org-owned
+        // repos can be claimed. Harmless read-only scope for personal claims.
+        additionalScopes: ["read-repos"],
       });
       const url = res?.verification?.externalVerificationRedirectURL;
       if (url) {
