@@ -5,13 +5,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Show, UserButton } from "@clerk/nextjs";
 import { formatCount } from "@/lib/format";
-import { IconStar } from "@/components/icons";
+import { IconGitHub, IconStar } from "@/components/icons";
 
 const LINKS = [
   { href: "/", label: "Directory" },
   { href: "/categories", label: "Categories" },
   { href: "/about", label: "About" },
 ];
+
+const REPO_URL = "https://github.com/eigenweltlabs/legaloss";
 
 export function SiteHeader({ trackedStars }: { trackedStars: number }) {
   const pathname = usePathname();
@@ -60,6 +62,16 @@ export function SiteHeader({ trackedStars }: { trackedStars: number }) {
             <span className="topbar-stat-l">tracked</span>
           </span>
           <div className="topbar-right">
+            <a
+              href={REPO_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="topbar-gh"
+              aria-label="LegalOSS on GitHub"
+              title="View the source on GitHub"
+            >
+              <IconGitHub />
+            </a>
             <Show when="signed-out">
               <Link href="/sign-in" className="topbar-login">
                 Log in
@@ -113,6 +125,15 @@ export function SiteHeader({ trackedStars }: { trackedStars: number }) {
             Log in
           </Link>
         </Show>
+        <a
+          href={REPO_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="nav-drawer-gh"
+          onClick={() => setDrawerOpen(false)}
+        >
+          GitHub
+        </a>
       </nav>
     </>
   );

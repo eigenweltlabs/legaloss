@@ -11,16 +11,13 @@ repository can be indexed exactly once. Browsing needs no account; signed-in
 members can star, review, comment, and submit projects. A project's page
 belongs to whoever proves — through GitHub OAuth — that they hold admin rights
 on the repository; tagline, categories, and the maintainer's note are
-maintainer-curated after claiming. Site admins can feature projects, which
-puts them in the homepage rotator and the next newsletter issue.
+maintainer-curated after claiming.
 
 ## Stack
 
 - **Next.js 16** (App Router, `proxy.ts` request interception), React 19, TypeScript
 - **Clerk** for auth (optional sign-up; GitHub social connection for ownership claims)
 - **Drizzle ORM + better-sqlite3** (`data/app.db`, WAL mode)
-- **PostHog** product analytics (EU cloud, cookieless before consent)
-- **Brevo** for the featured-projects newsletter
 - Plain CSS design system in `app/globals.css` — no Tailwind
 
 ## Getting started
@@ -40,9 +37,7 @@ idempotent, already-indexed repos are skipped (see [SETUP.md](./SETUP.md)).
 
 Clerk keys live in `.env.local` (see `.env.example`); without them Clerk runs
 in keyless dev mode. See [SETUP.md](./SETUP.md) for the checklist, including
-the GitHub social connection required by the claim flow and the PostHog/Brevo
-setup. PostHog and the newsletter are optional: with their env vars absent,
-analytics is disabled and the subscribe endpoint reports itself unconfigured.
+the GitHub social connection required by the claim flow.
 
 ## How the pieces fit
 
@@ -57,8 +52,6 @@ analytics is disabled and the subscribe endpoint reports itself unconfigured.
 | All mutations (submit, star, comment, review, claim, edit, feature) | `app/actions.ts` |
 | Token-gated bulk indexing (`ADMIN_API_TOKEN` Bearer auth) | `app/api/admin/index-repos/route.ts` |
 | Lazy Clerk→DB user mirror | `lib/users.ts` |
-| Analytics: cookieless-by-default PostHog + consent banner | `components/posthog-analytics.tsx`, `components/consent-banner.tsx` |
-| Newsletter: signup route + footer form + Brevo scripts | `app/api/subscribe/route.ts`, `components/newsletter-form.tsx`, `scripts/*newsletter*.ts` |
 | SEO: DB-driven sitemap, robots, per-project metadata + JSON-LD | `app/sitemap.ts`, `app/robots.ts`, `app/projects/[owner]/[repo]/page.tsx` |
 | Design tokens + components ("Solar") | `app/globals.css` |
 
@@ -77,24 +70,4 @@ read-only) for the 5,000/hour pool.
    numeric owner-ID fallback for personal repos). Only the verified claimant can
    edit a project's name, tagline, website, categories, and maintainer's note.
 4. **Featuring is editorial.** Admins (env allowlist, never in the repo) pick
-   featured projects; the pick shows in the homepage rotator and goes out in
-   the next newsletter issue.
-
-## Analytics & consent
-
-PostHog runs in `cookieless_mode: "on_reject"`: visitors who accept the cookie
-banner get normal cookie-based analytics (including masked-input session
-replay); visitors who decline — or haven't decided — are counted anonymously
-via PostHog's server-side hash with nothing stored on their device. The
-project needs "Cookieless server hash mode" enabled in PostHog settings.
-`?loss-internal=1` flags your own browser so team visits never pollute the
-numbers (`?loss-internal=0` clears it).
-
-## Newsletter
-
-Signups post to `/api/subscribe`, which adds the address to a Brevo list
-(`BREVO_LIST_ID`). Issues compose from all featured-but-unannounced projects
-and go out as a Brevo campaign, stamping them announced. For production,
-POST `/api/admin/newsletter` with the admin Bearer token (`{"dryRun": true}`
-previews subject + HTML without sending); `pnpm newsletter:send` does the
-same against a local database.
+   featured projects; the pick shows in the homepage featured strip.
