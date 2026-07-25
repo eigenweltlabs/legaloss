@@ -18,22 +18,29 @@ import {
 } from "@/lib/db/schema";
 import { isAdminUser } from "@/lib/admin";
 import { autoCategorize } from "@/lib/auto-categories";
-import { fetchRepo, parseGitHubUrl } from "@/lib/github";
 import { verifyRepoOwnership } from "@/lib/github-ownership";
+import { verifyHfOwnership } from "@/lib/huggingface-ownership";
+import { detectSource, resolveRepo } from "@/lib/index-repo";
+import { projectHref } from "@/lib/sources";
 import { ensureCurrentUser } from "@/lib/users";
 
 type ActionError = { ok: false; error: string };
+
+type SourceShape = {
+  source: string;
+  sourceType: string | null;
+  owner: string;
+  repo: string;
+};
 
 function fail(error: string): ActionError {
   return { ok: false, error };
 }
 
-function projectPath(p: { owner: string; repo: string }) {
-  return `/projects/${p.owner}/${p.repo}`;
-}
-
-function revalidateProject(p: { owner: string; repo: string }) {
-  revalidatePath(projectPath(p));
+function revalidateProject(p: SourceShape | { owner: string; repo: string }) {
+  const shape: SourceShape =
+    "source" in p ? p : { source: "github", sourceType: null, owner: p.owner, repo: p.repo };
+  revalidatePath(projectHref(shape));
   revalidatePath("/projects");
   revalidatePath("/");
 }
@@ -47,56 +54,64 @@ async function getProjectById(id: number) {
 
 export type RepoPreview = {
   ok: true;
+  source: "github" | "huggingface";
+  sourceType: string | null;
   owner: string;
   repo: string;
   fullName: string;
   description: string | null;
+  /** GitHub stars or Hugging Face likes. */
   stars: number;
+  /** Hugging Face downloads (0 for GitHub). */
+  downloads: number;
   language: string | null;
   licenseSpdx: string | null;
   topics: string[];
   archived: boolean;
 };
 
-export async function previewRepo(
-  input: string,
-): Promise<RepoPreview | (ActionError & { existingPath?: string })> {
-  const parsed = parseGitHubUrl(input);
-  if (!parsed) {
-    return fail(
-      "That doesn't look like a GitHub repository. Paste a URL like github.com/owner/repo.",
-    );
-  }
-
-  const result = await fetchRepo(parsed.owner, parsed.repo);
-  if (result.error) return fail(result.error.message);
-  const d = result.data;
-  if (d.isPrivate) return fail("Only public repositories can be indexed.");
-
-  const key = d.fullName.toLowerCase();
-  const existing = await db
-    .select({ owner: projects.owner, repo: projects.repo })
+async function findExistingPath(key: string): Promise<string | undefined> {
+  const rows = await db
+    .select({ source: projects.source, sourceType: projects.sourceType, owner: projects.owner, repo: projects.repo })
     .from(projects)
     .where(eq(projects.fullNameKey, key))
     .limit(1);
-  if (existing[0]) {
-    return {
-      ...fail(`${d.fullName} is already in the index.`),
-      existingPath: projectPath(existing[0]),
-    };
+  return rows[0] ? projectHref(rows[0]) : undefined;
+}
+
+export async function previewRepo(
+  input: string,
+): Promise<RepoPreview | (ActionError & { existingPath?: string })> {
+  const detected = detectSource(input);
+  if (!detected) {
+    return fail(
+      "That doesn't look like a repository. Paste a github.com/owner/repo or huggingface.co/owner/name URL.",
+    );
+  }
+
+  const resolved = await resolveRepo(detected);
+  if ("error" in resolved) return fail(resolved.error);
+  const d = resolved.data;
+
+  const existingPath = await findExistingPath(d.key);
+  if (existingPath) {
+    return { ...fail(`${d.fullName} is already in the index.`), existingPath };
   }
 
   return {
     ok: true,
+    source: d.source,
+    sourceType: d.sourceType,
     owner: d.owner,
     repo: d.repo,
     fullName: d.fullName,
     description: d.description,
-    stars: d.stars,
-    language: d.language,
-    licenseSpdx: d.licenseSpdx,
+    stars: d.stats.stars ?? 0,
+    downloads: d.stats.downloads ?? 0,
+    language: d.stats.language ?? null,
+    licenseSpdx: d.stats.licenseSpdx ?? null,
     topics: d.topics,
-    archived: d.archived,
+    archived: d.stats.archived ?? false,
   };
 }
 
@@ -122,35 +137,33 @@ export async function submitProject(
     return fail(body.error.issues[0]?.message ?? "Invalid submission.");
   }
 
-  const parsed = parseGitHubUrl(body.data.url);
-  if (!parsed) return fail("Invalid GitHub repository URL.");
+  const detected = detectSource(body.data.url);
+  if (!detected) return fail("Invalid repository URL.");
 
-  // Fetch canonical data server-side; never trust the client's preview.
-  const result = await fetchRepo(parsed.owner, parsed.repo);
-  if (result.error) return fail(result.error.message);
-  const d = result.data;
-  if (d.isPrivate) return fail("Only public repositories can be indexed.");
+  // Normalize both sources to the columns projects/projectStats need. Fetched
+  // server-side; the client's preview is never trusted.
+  const resolved = await resolveRepo(detected);
+  if ("error" in resolved) return fail(resolved.error);
+  const fields = resolved.data;
 
   // Tagline and categories are maintainer-curated after claiming; submissions
-  // only get a provisional auto-categorization from GitHub topics/description.
-  const provisionalSlugs = autoCategorize(d.topics, d.description, d.repo);
+  // only get a provisional auto-categorization from topics/description.
+  const provisionalSlugs = autoCategorize(fields.topics, fields.description, fields.repo);
   const catRows = provisionalSlugs.length
-    ? await db
-        .select()
-        .from(categories)
-        .where(inArray(categories.slug, provisionalSlugs))
+    ? await db.select().from(categories).where(inArray(categories.slug, provisionalSlugs))
     : [];
 
-  const key = d.fullName.toLowerCase();
   let projectId: number;
   try {
     const inserted = await db
       .insert(projects)
       .values({
-        owner: d.owner,
-        repo: d.repo,
-        fullNameKey: key,
-        name: d.repo,
+        source: fields.source,
+        sourceType: fields.sourceType,
+        owner: fields.owner,
+        repo: fields.repo,
+        fullNameKey: fields.key,
+        name: fields.repo,
         websiteUrl: body.data.websiteUrl || null,
         submittedById: userId,
       })
@@ -158,32 +171,15 @@ export async function submitProject(
     projectId = inserted[0].id;
   } catch {
     // Unique-constraint race: someone indexed it between preview and submit.
-    const existing = await db
-      .select({ owner: projects.owner, repo: projects.repo })
-      .from(projects)
-      .where(eq(projects.fullNameKey, key))
-      .limit(1);
     return {
-      ...fail(`${d.fullName} is already in the index.`),
-      existingPath: existing[0] ? projectPath(existing[0]) : undefined,
+      ...fail(`${fields.fullName} is already in the index.`),
+      existingPath: await findExistingPath(fields.key),
     };
   }
 
   await db.insert(projectStats).values({
     projectId,
-    stars: d.stars,
-    forks: d.forks,
-    openIssues: d.openIssues,
-    subscribers: d.subscribers,
-    language: d.language,
-    licenseSpdx: d.licenseSpdx,
-    licenseName: d.licenseName,
-    topics: d.topics,
-    description: d.description,
-    homepage: d.homepage,
-    defaultBranch: d.defaultBranch,
-    pushedAt: d.pushedAt,
-    archived: d.archived,
+    ...fields.stats,
     fetchedAt: new Date(),
   });
   if (catRows.length > 0) {
@@ -192,8 +188,14 @@ export async function submitProject(
     );
   }
 
-  revalidateProject(d);
-  return { ok: true, path: projectPath(d) };
+  const shape = {
+    source: fields.source,
+    sourceType: fields.sourceType,
+    owner: fields.owner,
+    repo: fields.repo,
+  };
+  revalidateProject(shape);
+  return { ok: true, path: projectHref(shape) };
 }
 
 /* ============================== Stars ============================== */
@@ -253,7 +255,7 @@ export async function addComment(
     body: body.data.body,
   });
 
-  revalidatePath(projectPath(project));
+  revalidatePath(projectHref(project));
   return { ok: true };
 }
 
@@ -275,7 +277,7 @@ export async function deleteComment(
   await db.delete(comments).where(eq(comments.id, commentId));
 
   const project = await getProjectById(comment.projectId);
-  if (project) revalidatePath(projectPath(project));
+  if (project) revalidatePath(projectHref(project));
   return { ok: true };
 }
 
@@ -352,6 +354,8 @@ export type ClaimResult =
         | "repo-not-found"
         | "not-owner"
         | "github-error"
+        | "no-hf-connection"
+        | "hf-error"
         | "already-claimed";
     });
 
@@ -368,21 +372,42 @@ export async function claimProject(projectId: number): Promise<ClaimResult> {
     };
   }
 
-  const result = await verifyRepoOwnership(userId, project.owner, project.repo);
-  if (!result.owned) {
-    const messages: Record<string, string> = {
-      "no-github-connection":
-        "Connect your GitHub account first, then try again.",
-      "token-revoked":
-        "Your GitHub authorization was revoked. Reconnect GitHub and try again.",
-      "repo-not-found":
-        "GitHub couldn't find this repository with your account's access.",
-      "not-owner": result.githubLogin
-        ? `Your GitHub account (@${result.githubLogin}) doesn't have admin rights on ${project.owner}/${project.repo}.`
-        : "Your GitHub account doesn't have admin rights on this repository.",
-      "github-error": "GitHub couldn't be reached. Try again shortly.",
-    };
-    return { ...fail(messages[result.reason]), reason: result.reason };
+  let login: string;
+  let method: string;
+  if (project.source === "huggingface") {
+    const result = await verifyHfOwnership(userId, project.owner);
+    if (!result.owned) {
+      const messages: Record<string, string> = {
+        "no-hf-connection": "Connect your Hugging Face account first, then try again.",
+        "token-revoked":
+          "Your Hugging Face authorization was revoked. Reconnect and try again.",
+        "not-owner": result.hfUsername
+          ? `Your Hugging Face account (@${result.hfUsername}) doesn't own ${project.owner}/${project.repo}.`
+          : `Your Hugging Face account doesn't own ${project.owner}/${project.repo}.`,
+        "hf-error": "Hugging Face couldn't be reached. Try again shortly.",
+      };
+      return { ...fail(messages[result.reason]), reason: result.reason };
+    }
+    login = result.hfUsername;
+    method = `hf-${result.method}`;
+  } else {
+    const result = await verifyRepoOwnership(userId, project.owner, project.repo);
+    if (!result.owned) {
+      const messages: Record<string, string> = {
+        "no-github-connection": "Connect your GitHub account first, then try again.",
+        "token-revoked":
+          "Your GitHub authorization was revoked. Reconnect GitHub and try again.",
+        "repo-not-found":
+          "GitHub couldn't find this repository with your account's access.",
+        "not-owner": result.githubLogin
+          ? `Your GitHub account (@${result.githubLogin}) doesn't have admin rights on ${project.owner}/${project.repo}.`
+          : "Your GitHub account doesn't have admin rights on this repository.",
+        "github-error": "GitHub couldn't be reached. Try again shortly.",
+      };
+      return { ...fail(messages[result.reason]), reason: result.reason };
+    }
+    login = result.githubLogin;
+    method = result.method;
   }
 
   await db
@@ -392,13 +417,13 @@ export async function claimProject(projectId: number): Promise<ClaimResult> {
   await db.insert(claims).values({
     projectId,
     userId,
-    githubLogin: result.githubLogin,
-    method: result.method,
+    githubLogin: login,
+    method,
   });
 
   revalidateProject(project);
-  revalidatePath(`${projectPath(project)}/claim`);
-  return { ok: true, method: result.method };
+  revalidatePath(`${projectHref(project)}/claim`);
+  return { ok: true, method };
 }
 
 export async function releaseClaim(
@@ -600,5 +625,5 @@ export async function updateProject(
   );
 
   revalidateProject(project);
-  return { ok: true, path: projectPath(project) };
+  return { ok: true, path: projectHref(project) };
 }

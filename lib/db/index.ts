@@ -68,6 +68,11 @@ function ensureAdditiveColumns(sqlite: Database.Database) {
       ["featured", "ALTER TABLE projects ADD featured integer DEFAULT false NOT NULL"],
       ["featured_at", "ALTER TABLE projects ADD featured_at integer"],
       ["featured_announced_at", "ALTER TABLE projects ADD featured_announced_at integer"],
+      ["source", "ALTER TABLE projects ADD source text DEFAULT 'github' NOT NULL"],
+      ["source_type", "ALTER TABLE projects ADD source_type text"],
+    ],
+    project_stats: [
+      ["downloads", "ALTER TABLE project_stats ADD downloads integer DEFAULT 0 NOT NULL"],
     ],
     project_readmes: [
       ["custom_html", "ALTER TABLE project_readmes ADD custom_html text"],

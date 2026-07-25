@@ -390,6 +390,17 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 .status-pill.is-claimed { background: var(--forest-200); color: var(--forest); }
 .status-pill.is-unclaimed { background: var(--cream-deep); color: var(--ink-500); }
 .status-pill.is-archived { background: var(--warning-soft); color: var(--warning); }
+.status-pill.is-hf { background: var(--butter); color: var(--ink-700); }
+.status-pill.is-hf svg { width: 12px; height: 12px; }
+
+/* Hugging Face avatar tile in the featured strip (no deterministic avatar URL). */
+.fc-avatar {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; flex-shrink: 0;
+  border-radius: var(--radius-md);
+  font-family: var(--font-display); font-weight: 700; font-size: 18px;
+}
+.fc-avatar-hf { background: var(--butter); color: var(--ink-deep); }
 
 .avatar {
   display: inline-flex; align-items: center; justify-content: center;

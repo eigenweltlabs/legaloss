@@ -34,6 +34,8 @@ export async function POST(request: Request) {
   const rows = await db
     .select({
       id: projects.id,
+      source: projects.source,
+      sourceType: projects.sourceType,
       owner: projects.owner,
       repo: projects.repo,
       name: projects.name,
