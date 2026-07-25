@@ -492,6 +492,14 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   white-space: nowrap;
 }
 .topbar-login:hover { color: var(--ink-deep); }
+.topbar-gh {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: var(--radius-md);
+  color: var(--ink-700);
+  transition: color var(--dur-fast) ease, background var(--dur-fast) ease;
+}
+.topbar-gh svg { width: 18px; height: 18px; }
+.topbar-gh:hover { color: var(--ink-deep); background: var(--hover); }
 .topbar-user { display: inline-flex; align-items: center; }
 
 .topbar-burger { display: none; }
@@ -521,7 +529,7 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 }
 
 @media (max-width: 900px) {
-  .topbar-links, .topbar-login, .topbar-cta, .topbar-stat { display: none; }
+  .topbar-links, .topbar-login, .topbar-cta, .topbar-stat, .topbar-gh { display: none; }
   .topbar-burger {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
     width: 44px; height: 44px; margin-right: -8px; border-radius: var(--radius-md);
