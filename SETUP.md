@@ -27,11 +27,18 @@ keyless mode.
    (`user.createExternalAccount` + `getUserOauthAccessToken`).
    Without it, claiming fails with "no GitHub connection".
 2b. **Enable the Hugging Face social connection** — Clerk Dashboard → SSO
-   connections → Hugging Face (scopes: openid, profile, email). Dev uses
-   Clerk's preconfigured credentials; production needs a Hugging Face Connected
-   App (client id/secret + the Clerk redirect URL). This powers the Hugging
-   Face **claim flow** (`whoami-v2` confirms the user owns the repo or its org).
-   Without it, HF claims fail with "no Hugging Face connection".
+   connections → Hugging Face. Dev uses Clerk's preconfigured credentials;
+   production needs a Hugging Face Connected App (client id/secret + the Clerk
+   redirect URL). This powers the HF **claim flow**, where `whoami-v2` confirms
+   the user owns the repo. Scopes:
+   - `openid`, `profile`, `email` — enough to claim a repo under your own
+     Hugging Face **username** (the username-match path).
+   - add **`read-repos`** to also claim **organization**-owned repos: it is the
+     org-applicable scope that makes an org (and the member's `roleInOrg`)
+     appear in `whoami-v2`, and the maintainer selects the org on Hugging
+     Face's authorize screen. Only admin/write org members can claim; the check
+     fails closed otherwise. (Hugging Face has no `read-org` scope.)
+   Without the connection, HF claims fail with "no Hugging Face connection".
 3. **Production only:** GitHub OAuth app with custom credentials (Clerk gives
    you the callback URL), because shared dev credentials don't work in prod.
    Note: organizations with OAuth-app access restrictions may hide org repos
