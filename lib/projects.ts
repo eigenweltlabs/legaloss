@@ -78,7 +78,7 @@ export async function listProjects(opts: {
   const {
     categorySlug,
     q,
-    sort = "gh-stars",
+    sort = "site-stars",
     language,
     license,
     activeOnly = false,

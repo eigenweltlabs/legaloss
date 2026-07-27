@@ -24,6 +24,13 @@ const VALID_SORTS: SortKey[] = [
   "active",
 ];
 
+/**
+ * The index leads with its own community's signal rather than GitHub's.
+ * Ties fall back to GitHub stars, so the order stays sensible while site
+ * stars are still sparse. Mirrored by SORTS[0] in browse-controls.
+ */
+const DEFAULT_SORT: SortKey = "site-stars";
+
 export default async function HomePage({
   searchParams,
 }: {
@@ -35,10 +42,10 @@ export default async function HomePage({
   const language = typeof params.lang === "string" ? params.lang : undefined;
   const license = typeof params.license === "string" ? params.license : undefined;
   const activeOnly = params.active === "1";
-  const sortParam = typeof params.sort === "string" ? params.sort : "gh-stars";
+  const sortParam = typeof params.sort === "string" ? params.sort : DEFAULT_SORT;
   const sort = (VALID_SORTS as string[]).includes(sortParam)
     ? (sortParam as SortKey)
-    : "gh-stars";
+    : DEFAULT_SORT;
 
   const { userId } = await auth();
   const [items, cats, filterOptions, featured] = await Promise.all([
