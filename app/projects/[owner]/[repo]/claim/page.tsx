@@ -4,8 +4,10 @@ import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
 import { getProject } from "@/lib/projects";
 import { hasGithubConnection } from "@/lib/github-ownership";
+import { CLAIM_FILE_NAME, claimToken } from "@/lib/claim-file";
 import { ClaimButton } from "@/components/claim-button";
 import { ConnectGitHub } from "@/components/connect-github";
+import { FileClaim } from "@/components/file-claim";
 import { IconCheck } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -127,6 +129,26 @@ export default async function ClaimPage({
               Works for personal repositories and organization repositories where
               you hold admin permission. Public repositories only.
             </p>
+
+            <details className="claim-alt">
+              <summary>Rather not connect GitHub? Verify with a file instead</summary>
+              <div className="claim-alt-body">
+                {userId ? (
+                  <FileClaim
+                    projectId={project.id}
+                    projectPath={projectPath}
+                    token={claimToken(project.id, userId)}
+                    fileName={CLAIM_FILE_NAME}
+                    fullName={`${project.owner}/${project.repo}`}
+                    sourceName="GitHub"
+                  />
+                ) : (
+                  <p className="body-s">
+                    Sign in first — the token below is tied to your account.
+                  </p>
+                )}
+              </div>
+            </details>
           </div>
         )}
       </div>

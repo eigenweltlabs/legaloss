@@ -51,6 +51,13 @@ keyless mode.
    repo on purpose — to `/api/admin/index-repos` with the Bearer token
    (idempotent; already-indexed repos come back as `exists`):
    `curl -X POST https://legal-oss.com/api/admin/index-repos -H "Authorization: Bearer $ADMIN_API_TOKEN" -H "Content-Type: application/json" -d '{"repos":[{"repo":"owner/name","categories":["platforms"],"tagline":"Short blurb"}]}'`
+9. **Manual claim grants** — the break-glass path when a maintainer proves
+   control out of band and neither self-serve route fits. Same Bearer token;
+   identify the person by `userId` or `email` (they must have signed in at
+   least once). Refuses to take a project from an existing claimant unless
+   `"force": true`, and every grant is logged in `claims` as `admin-grant`:
+   `curl -X POST https://legal-oss.com/api/admin/claims -H "Authorization: Bearer $ADMIN_API_TOKEN" -H "Content-Type: application/json" -d '{"grants":[{"repo":"owner/name","email":"maintainer@firm.com"}]}'`
+   Undo with `curl -X DELETE .../api/admin/claims -d '{"repos":["owner/name"]}'`.
 
 ## Verification status (last local QA)
 

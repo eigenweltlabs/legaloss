@@ -4,9 +4,12 @@ import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
 import { getHfProject } from "@/lib/projects";
 import { hasHfConnection } from "@/lib/huggingface-ownership";
+import { isHfOrganization } from "@/lib/huggingface";
+import { CLAIM_FILE_NAME, claimToken } from "@/lib/claim-file";
 import { projectHref } from "@/lib/sources";
 import { ClaimButton } from "@/components/claim-button";
 import { ConnectHuggingFace } from "@/components/connect-huggingface";
+import { FileClaim } from "@/components/file-claim";
 import { IconCheck } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +33,9 @@ export default async function HfClaimPage({
     project.claimedById !== null && project.claimedById !== userId;
   const claimedByMe = userId !== null && project.claimedById === userId;
   const hfConnected = userId ? await hasHfConnection(userId) : false;
+  // Org-owned repos are the only ones that cost a repository scope; personal
+  // ones verify off the identity endpoint alone.
+  const ownerIsOrg = await isHfOrganization(project.owner);
 
   return (
     <div className="container">
@@ -100,11 +106,17 @@ export default async function HfClaimPage({
                     <span className="mono" style={{ fontSize: 12 }}>
                       {project.owner}/{project.repo}
                     </span>
-                    . We only read your public identity.
+                    .{" "}
+                    {ownerIsOrg
+                      ? "Hugging Face has no organization-only scope, so confirming membership asks for repository read access. We only ever call the identity endpoint — and the file method below needs no access at all."
+                      : "We only read your public identity."}
                   </p>
                   {userId && !hfConnected && (
                     <div style={{ marginTop: 10 }}>
-                      <ConnectHuggingFace returnTo={claimPath} />
+                      <ConnectHuggingFace
+                        returnTo={claimPath}
+                        requestOrgAccess={ownerIsOrg}
+                      />
                     </div>
                   )}
                 </div>
@@ -134,6 +146,28 @@ export default async function HfClaimPage({
               Works for repositories you own personally and those under an
               organization you belong to. Public repositories only.
             </p>
+
+            <details className="claim-alt">
+              <summary>
+                Rather not connect Hugging Face? Verify with a file instead
+              </summary>
+              <div className="claim-alt-body">
+                {userId ? (
+                  <FileClaim
+                    projectId={project.id}
+                    projectPath={projectPath}
+                    token={claimToken(project.id, userId)}
+                    fileName={CLAIM_FILE_NAME}
+                    fullName={`${project.owner}/${project.repo}`}
+                    sourceName="Hugging Face"
+                  />
+                ) : (
+                  <p className="body-s">
+                    Sign in first — the token below is tied to your account.
+                  </p>
+                )}
+              </div>
+            </details>
           </div>
         )}
       </div>

@@ -47,10 +47,12 @@ the GitHub social connection required by the claim flow.
 | GitHub API client + URL parsing + README/video rewriting | `lib/github.ts` |
 | Staleness logic + list/detail/featured queries + browse filters | `lib/projects.ts` |
 | Ownership verification (Clerk OAuth token → GitHub `permissions.admin`) | `lib/github-ownership.ts` |
+| Scope-free ownership verification (token published in the repo) | `lib/claim-file.ts` |
 | Provisional auto-categorization of submissions | `lib/auto-categories.ts` |
 | Site-admin allowlist (`ADMIN_USER_IDS`) | `lib/admin.ts` |
 | All mutations (submit, star, comment, review, claim, edit, feature) | `app/actions.ts` |
 | Token-gated bulk indexing (`ADMIN_API_TOKEN` Bearer auth) | `app/api/admin/index-repos/route.ts` |
+| Manual claim grants / releases (same Bearer auth) | `app/api/admin/claims/route.ts` |
 | Lazy Clerk→DB user mirror | `lib/users.ts` |
 | SEO: DB-driven sitemap, robots, per-project metadata + JSON-LD | `app/sitemap.ts`, `app/robots.ts`, `app/projects/[owner]/[repo]/page.tsx` |
 | Design tokens + components ("Solar") | `app/globals.css` |
@@ -67,7 +69,12 @@ read-only) for the 5,000/hour pool.
    `owner/repo` key; renames are re-canonicalized on refresh.
 3. **Claims are proven, not asserted.** The claim flow fetches the user's GitHub
    OAuth token from Clerk and checks `permissions.admin` on the repo (with a
-   numeric owner-ID fallback for personal repos). Only the verified claimant can
-   edit a project's name, tagline, website, categories, and maintainer's note.
+   numeric owner-ID fallback for personal repos); Hugging Face claims match the
+   whoami-v2 identity or an organization role. Maintainers who would rather
+   grant no OAuth scope at all can instead publish a per-person token in
+   `legaloss-verify.txt` (or the README), which is read back anonymously — the
+   only route that works for Hugging Face organizations without also granting
+   `read-repos` over private repositories. Only the verified claimant can edit a
+   project's name, tagline, website, categories, and maintainer's note.
 4. **Featuring is editorial.** Admins (env allowlist, never in the repo) pick
    featured projects; the pick shows in the homepage featured strip.

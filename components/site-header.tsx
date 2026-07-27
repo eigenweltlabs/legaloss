@@ -55,6 +55,14 @@ export function SiteHeader({ trackedStars }: { trackedStars: number }) {
                 {l.label}
               </Link>
             ))}
+            <Show when="signed-in">
+              <Link
+                href="/starred"
+                className={pathname.startsWith("/starred") ? "is-current" : ""}
+              >
+                Starred
+              </Link>
+            </Show>
           </nav>
           <span className="topbar-stat" title="GitHub stars across all indexed projects">
             <IconStar filled />
@@ -117,6 +125,11 @@ export function SiteHeader({ trackedStars }: { trackedStars: number }) {
             {l.label}
           </Link>
         ))}
+        <Show when="signed-in">
+          <Link href="/starred" onClick={() => setDrawerOpen(false)}>
+            Starred
+          </Link>
+        </Show>
         <Link href="/submit" onClick={() => setDrawerOpen(false)}>
           Submit a project
         </Link>

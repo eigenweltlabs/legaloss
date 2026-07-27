@@ -10,7 +10,18 @@ import { IconHuggingFace } from "@/components/icons";
  * then sends the browser through Hugging Face's authorize screen and back to
  * returnTo. Mirrors ConnectGitHub.
  */
-export function ConnectHuggingFace({ returnTo }: { returnTo: string }) {
+export function ConnectHuggingFace({
+  returnTo,
+  requestOrgAccess = false,
+}: {
+  returnTo: string;
+  /**
+   * Only for organization-owned repos. Hugging Face has no organization-only
+   * scope, so proving org membership costs `read-repos` — which also grants
+   * read access to private repos. Personal claims never ask for it.
+   */
+  requestOrgAccess?: boolean;
+}) {
   const { user } = useUser();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -29,10 +40,11 @@ export function ConnectHuggingFace({ returnTo }: { returnTo: string }) {
           NonNullable<typeof user>["createExternalAccount"]
         >[0]["strategy"],
         redirectUrl: returnTo,
-        // read-repos is the org-applicable scope: it makes the user's
-        // organizations (and their role) appear in whoami-v2, so org-owned
-        // repos can be claimed. Harmless read-only scope for personal claims.
-        additionalScopes: ["read-repos"],
+        // read-repos makes the user's organizations (and their role) appear in
+        // whoami-v2, which is the only way to verify an org-owned repo. It also
+        // grants read access to private repos, so it is requested only when the
+        // repo being claimed actually belongs to an organization.
+        ...(requestOrgAccess ? { additionalScopes: ["read-repos"] } : {}),
       });
       const url = res?.verification?.externalVerificationRedirectURL;
       if (url) {

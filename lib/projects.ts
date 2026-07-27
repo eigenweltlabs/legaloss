@@ -48,7 +48,14 @@ export type ProjectListItem = {
   categories: { slug: string; name: string }[];
 };
 
-export type SortKey = "gh-stars" | "site-stars" | "rating" | "newest" | "active";
+export type SortKey =
+  | "gh-stars"
+  | "site-stars"
+  | "rating"
+  | "newest"
+  | "active"
+  /** Only meaningful alongside starredByUserId; not offered in browse. */
+  | "recently-starred";
 
 /** Projects pushed within this window count as "active". */
 export const ACTIVE_WINDOW_DAYS = 30;
@@ -65,6 +72,8 @@ export async function listProjects(opts: {
   activeOnly?: boolean;
   /** When set, each item carries whether this user has starred it. */
   userId?: string | null;
+  /** Restrict to the projects this user has starred (their reading list). */
+  starredByUserId?: string | null;
 } = {}): Promise<ProjectListItem[]> {
   const {
     categorySlug,
@@ -74,6 +83,7 @@ export async function listProjects(opts: {
     license,
     activeOnly = false,
     userId = null,
+    starredByUserId = null,
   } = opts;
 
   const siteStarAgg = db
@@ -119,6 +129,17 @@ export async function listProjects(opts: {
       ),
     );
   }
+  if (starredByUserId) {
+    conds.push(
+      inArray(
+        projects.id,
+        db
+          .select({ id: stars.projectId })
+          .from(stars)
+          .where(eq(stars.userId, starredByUserId)),
+      ),
+    );
+  }
   if (language) conds.push(eq(projectStats.language, language));
   if (license) conds.push(eq(projectStats.licenseSpdx, license));
   if (activeOnly) {
@@ -136,6 +157,12 @@ export async function listProjects(opts: {
     rating: [desc(sql`coalesce(${reviewAgg.avg}, 0)`), desc(sql`coalesce(${reviewAgg.n}, 0)`)],
     newest: [desc(projects.createdAt)],
     active: [desc(projectStats.pushedAt)],
+    // Most recently starred first, so a reading list reads like one.
+    "recently-starred": [
+      desc(
+        sql`(select ${stars.createdAt} from ${stars} where ${stars.projectId} = ${projects.id} and ${stars.userId} = ${starredByUserId ?? ""})`,
+      ),
+    ],
   }[sort];
 
   const rows = await db
