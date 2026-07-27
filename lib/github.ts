@@ -131,6 +131,26 @@ export async function fetchReadmeHtml(
 }
 
 /**
+ * Raw README text, whatever the file is called upstream (README.md, readme.rst,
+ * .github/README.md). Used by file-based claim verification, which needs the
+ * bytes rather than GitHub's rendered HTML.
+ */
+export async function fetchReadmeText(
+  owner: string,
+  repo: string,
+): Promise<string | null> {
+  const res = await fetch(
+    `${API}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/readme`,
+    {
+      headers: { ...headers(), Accept: "application/vnd.github.raw" },
+      cache: "no-store",
+    },
+  );
+  if (!res.ok) return null;
+  return res.text();
+}
+
+/**
  * GitHub's open_issues_count includes open pull requests. The Search API
  * gives the real open-issue number; callers fall back to the raw count.
  */

@@ -15,9 +15,11 @@ import {
   projectStats,
   reviews,
   stars,
+  users,
 } from "@/lib/db/schema";
 import { isAdminUser } from "@/lib/admin";
 import { autoCategorize } from "@/lib/auto-categories";
+import { CLAIM_FILE_NAME, claimToken, verifyClaimFile } from "@/lib/claim-file";
 import { verifyRepoOwnership } from "@/lib/github-ownership";
 import { verifyHfOwnership } from "@/lib/huggingface-ownership";
 import { detectSource, resolveRepo } from "@/lib/index-repo";
@@ -43,6 +45,8 @@ function revalidateProject(p: SourceShape | { owner: string; repo: string }) {
   revalidatePath(projectHref(shape));
   revalidatePath("/projects");
   revalidatePath("/");
+  // Starring is the one mutation that changes membership of a personal list.
+  revalidatePath("/starred");
 }
 
 async function getProjectById(id: number) {
@@ -356,8 +360,35 @@ export type ClaimResult =
         | "github-error"
         | "no-hf-connection"
         | "hf-error"
-        | "already-claimed";
+        | "already-claimed"
+        | "file-not-found"
+        | "file-mismatch"
+        | "fetch-error";
     });
+
+type ClaimSubject = Awaited<ReturnType<typeof getProjectById>>;
+
+/** Record a verified claim: current claimant on the project, plus an audit row. */
+async function commitClaim(
+  project: NonNullable<ClaimSubject>,
+  userId: string,
+  login: string,
+  method: string,
+) {
+  await db
+    .update(projects)
+    .set({ claimedById: userId, claimedAt: new Date(), updatedAt: new Date() })
+    .where(eq(projects.id, project.id));
+  await db.insert(claims).values({
+    projectId: project.id,
+    userId,
+    githubLogin: login,
+    method,
+  });
+
+  revalidateProject(project);
+  revalidatePath(`${projectHref(project)}/claim`);
+}
 
 export async function claimProject(projectId: number): Promise<ClaimResult> {
   const userId = await ensureCurrentUser();
@@ -410,20 +441,46 @@ export async function claimProject(projectId: number): Promise<ClaimResult> {
     method = result.method;
   }
 
-  await db
-    .update(projects)
-    .set({ claimedById: userId, claimedAt: new Date(), updatedAt: new Date() })
-    .where(eq(projects.id, projectId));
-  await db.insert(claims).values({
-    projectId,
-    userId,
-    githubLogin: login,
-    method,
-  });
-
-  revalidateProject(project);
-  revalidatePath(`${projectHref(project)}/claim`);
+  await commitClaim(project, userId, login, method);
   return { ok: true, method };
+}
+
+/**
+ * Scope-free alternative to the OAuth claim: the maintainer publishes their
+ * personal token in the repository, we read it back anonymously. Neither
+ * source exposes organization membership without also granting repository
+ * read access, so maintainers who decline that still have a way in.
+ */
+export async function claimProjectByFile(projectId: number): Promise<ClaimResult> {
+  const userId = await ensureCurrentUser();
+  if (!userId) return fail("Sign in to claim a project.");
+
+  const project = await getProjectById(projectId);
+  if (!project) return fail("Project not found.");
+  if (project.claimedById && project.claimedById !== userId) {
+    return {
+      ...fail("This project has already been claimed by its maintainer."),
+      reason: "already-claimed",
+    };
+  }
+
+  const result = await verifyClaimFile(project, claimToken(projectId, userId));
+  if (!result.verified) {
+    const messages: Record<typeof result.reason, string> = {
+      "file-not-found": `No ${CLAIM_FILE_NAME} found in ${project.owner}/${project.repo}. Commit it to the default branch (or paste the token into the README) and try again.`,
+      "file-mismatch": `${CLAIM_FILE_NAME} exists but doesn't contain your token. Check you copied the whole line — tokens are per person, so someone else's won't verify.`,
+      "fetch-error": `${project.source === "huggingface" ? "Hugging Face" : "GitHub"} couldn't be reached. Try again shortly.`,
+    };
+    return { ...fail(messages[result.reason]), reason: result.reason };
+  }
+
+  const rows = await db
+    .select({ username: users.username })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  await commitClaim(project, userId, rows[0]?.username ?? userId, "file-verification");
+  return { ok: true, method: "file-verification" };
 }
 
 export async function releaseClaim(

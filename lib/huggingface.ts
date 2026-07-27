@@ -28,6 +28,33 @@ export function hfKey(type: HfType, owner: string, repo: string): string {
   return `hf:${type}:${owner}/${repo}`.toLowerCase();
 }
 
+/**
+ * Whether an owner name is an organization rather than a user account. The
+ * public overview endpoint answers 200 for orgs and 404 for users.
+ *
+ * Drives how much OAuth we ask for: personal repos need nothing beyond the
+ * identity scopes, while org repos only show up in whoami-v2 under
+ * `read-repos` — which also grants read access to private repos, so it is
+ * requested only when the repo actually needs it. On an API hiccup we assume
+ * "organization", the permissive answer, so a real org claim never silently
+ * loses the scope it depends on.
+ */
+export async function isHfOrganization(name: string): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `${HF_API}/organizations/${encodeURIComponent(name)}/overview`,
+      {
+        headers: { "User-Agent": "legaloss" },
+        next: { revalidate: 60 * 60 * 24 },
+      },
+    );
+    if (res.status === 404) return false;
+    return true;
+  } catch {
+    return true;
+  }
+}
+
 export type HfRepoData = {
   type: HfType;
   owner: string;
