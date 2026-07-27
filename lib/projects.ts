@@ -339,6 +339,46 @@ export async function listProjectsForAdmin(): Promise<AdminProjectRow[]> {
     .orderBy(asc(sql`lower(${projects.owner})`), asc(sql`lower(${projects.repo})`));
 }
 
+export type StarRow = {
+  projectId: number;
+  source: string;
+  sourceType: string | null;
+  owner: string;
+  repo: string;
+  name: string;
+  userId: string;
+  userName: string | null;
+  userUsername: string | null;
+  userImage: string | null;
+  createdAt: Date;
+};
+
+/**
+ * Every site star ever cast, newest first, for the admin dashboard. Small by
+ * nature — one row per (project, member) — so it is read whole rather than
+ * paged.
+ */
+export async function listStarActivity(): Promise<StarRow[]> {
+  return db
+    .select({
+      projectId: projects.id,
+      source: projects.source,
+      sourceType: projects.sourceType,
+      owner: projects.owner,
+      repo: projects.repo,
+      name: projects.name,
+      userId: stars.userId,
+      userName: users.name,
+      userUsername: users.username,
+      userImage: users.imageUrl,
+      createdAt: stars.createdAt,
+    })
+    .from(stars)
+    .innerJoin(projects, eq(projects.id, stars.projectId))
+    .leftJoin(users, eq(users.id, stars.userId))
+    .orderBy(desc(stars.createdAt));
+}
+
 export async function getProject(owner: string, repo: string) {
   const key = `${owner}/${repo}`.toLowerCase();
   const row = await db
