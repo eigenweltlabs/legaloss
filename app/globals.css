@@ -918,6 +918,16 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 .token-box code { flex: 1; overflow-wrap: anywhere; color: var(--ink-deep); }
 .token-box .btn { flex-shrink: 0; }
 
+/* Admin claim tool: one row per claimed project. */
+.admin-rows { display: flex; flex-direction: column; gap: 0; }
+.admin-rows li {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 12px 0; list-style: none;
+}
+.admin-rows li + li { border-top: 1px solid var(--rule-2); }
+.admin-rows a { color: var(--ink-deep); overflow-wrap: anywhere; }
+.admin-rows a:hover { color: var(--vermilion); }
+
 .auth-shell { display: flex; justify-content: center; padding: 20px 0 60px; }
 
 /* ==========================================================================

@@ -81,6 +81,35 @@ export async function mirrorClerkUser(
   }
 }
 
+export type Member = { id: string; label: string };
+
+/**
+ * Everyone who has signed in, newest first, for the admin claim picker. Read
+ * from Clerk rather than the local users table: that table is only written on
+ * an authenticated mutation, so someone who signed in and did nothing else —
+ * exactly the person waiting on a manual grant — would be missing from it.
+ */
+export async function listMembers(limit = 200): Promise<Member[]> {
+  const client = await clerkClient();
+  try {
+    const { data } = await client.users.getUserList({
+      limit,
+      orderBy: "-created_at",
+    });
+    return data.map((u) => {
+      const name = [u.firstName, u.lastName].filter(Boolean).join(" ");
+      const email = u.primaryEmailAddress?.emailAddress;
+      const primary = name || u.username || email || u.id;
+      return {
+        id: u.id,
+        label: email && email !== primary ? `${primary} · ${email}` : primary,
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
 /** Resolve an email address to a Clerk user id. */
 export async function findClerkUserIdByEmail(email: string): Promise<string | null> {
   const client = await clerkClient();

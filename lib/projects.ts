@@ -306,6 +306,39 @@ export async function listFeaturedProjects(limit = 6): Promise<FeaturedProject[]
   return rows.map((r) => ({ ...r, categories: catsByProject.get(r.id) ?? [] }));
 }
 
+export type AdminProjectRow = {
+  id: number;
+  source: string;
+  sourceType: string | null;
+  owner: string;
+  repo: string;
+  name: string;
+  claimedById: string | null;
+  claimedAt: Date | null;
+  claimantName: string | null;
+  claimantUsername: string | null;
+};
+
+/** Every indexed project with its current claimant, for the admin claim tool. */
+export async function listProjectsForAdmin(): Promise<AdminProjectRow[]> {
+  return db
+    .select({
+      id: projects.id,
+      source: projects.source,
+      sourceType: projects.sourceType,
+      owner: projects.owner,
+      repo: projects.repo,
+      name: projects.name,
+      claimedById: projects.claimedById,
+      claimedAt: projects.claimedAt,
+      claimantName: users.name,
+      claimantUsername: users.username,
+    })
+    .from(projects)
+    .leftJoin(users, eq(users.id, projects.claimedById))
+    .orderBy(asc(sql`lower(${projects.owner})`), asc(sql`lower(${projects.repo})`));
+}
+
 export async function getProject(owner: string, repo: string) {
   const key = `${owner}/${repo}`.toLowerCase();
   const row = await db
