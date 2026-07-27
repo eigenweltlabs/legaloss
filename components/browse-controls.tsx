@@ -29,6 +29,9 @@ export function BrowseControls({
       if (v) next.set(k, v);
       else next.delete(k);
     }
+    // Any filter change reshuffles the result set, so page 7 of the old one
+    // is meaningless — and often past the end of the new one.
+    next.delete("page");
     router.replace(`/?${next.toString()}`, { scroll: false });
   }
 

@@ -45,7 +45,7 @@ export default async function StarredPage() {
     );
   }
 
-  const items = await listProjects({
+  const { items } = await listProjects({
     userId,
     starredByUserId: userId,
     sort: "recently-starred",
