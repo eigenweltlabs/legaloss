@@ -644,6 +644,9 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 }
 .project-card .pc-meta svg { width: 12px; height: 12px; vertical-align: -2px; margin-right: 4px; color: var(--ink-500); }
 .project-card .pc-meta .m { display: inline-flex; align-items: center; }
+/* Lone provenance mark: no label follows it, so drop the icon's text gap. */
+.project-card .pc-meta .pc-source svg { margin-right: 0; width: 13px; height: 13px; }
+.project-card .pc-meta .pc-source { color: var(--ink-700); }
 
 .pc-star {
   display: inline-flex; align-items: center; gap: 5px;
