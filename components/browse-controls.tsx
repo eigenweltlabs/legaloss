@@ -3,9 +3,10 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { IconSearch } from "@/components/icons";
 
+/** First entry is the default; keep it in sync with DEFAULT_SORT in app/page.tsx. */
 const SORTS = [
-  { value: "gh-stars", label: "GitHub stars" },
   { value: "site-stars", label: "Community stars" },
+  { value: "gh-stars", label: "GitHub stars" },
   { value: "rating", label: "Top rated" },
   { value: "newest", label: "Recently added" },
   { value: "active", label: "Recently active" },
@@ -95,7 +96,7 @@ export function BrowseControls({
         id="sort"
         className="select"
         aria-label="Sort projects"
-        value={params.get("sort") ?? "gh-stars"}
+        value={params.get("sort") ?? SORTS[0].value}
         onChange={(e) => update({ sort: e.target.value })}
       >
         {SORTS.map((s) => (
