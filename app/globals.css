@@ -657,9 +657,18 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 }
 .pc-star svg { width: 12px; height: 12px; }
 .pc-star:hover { border-color: var(--vermilion); color: var(--vermilion); transform: translateY(-1px); }
+/* Tinted, not solid: a filled vermilion pill was the loudest thing on the
+   card and competed with the active category chip. Matches badge-accent and
+   status-pill.is-claimed. Solid fill is kept for hover, where it reads as
+   "click to remove" rather than as permanent emphasis. */
 .pc-star.is-on {
   border-color: var(--vermilion);
+  background: var(--vermilion-200);
+  color: var(--vermilion-700);
+}
+.pc-star.is-on:hover {
   background: var(--vermilion);
+  border-color: var(--vermilion);
   color: var(--cream);
 }
 .pc-star:focus-visible { box-shadow: 0 0 0 2px var(--focus-ring); outline: none; }
@@ -920,6 +929,8 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 }
 .token-box code { flex: 1; overflow-wrap: anywhere; color: var(--ink-deep); }
 .token-box .btn { flex-shrink: 0; }
+
+.admin-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 28px; }
 
 /* Admin claim tool: one row per claimed project. */
 .admin-rows { display: flex; flex-direction: column; gap: 0; }
