@@ -932,6 +932,21 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 
 .admin-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 28px; }
 
+/* Directory pager */
+.pager {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap; margin-top: 28px;
+}
+.pager-range { color: var(--ink-500); }
+.pager-links { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pager-links .glass-chip { padding: 8px 14px; }
+.pager-links .is-disabled { opacity: 0.35; pointer-events: none; }
+.pager-gap { font-family: var(--font-mono); font-size: 12px; color: var(--ink-500); padding: 0 2px; }
+@media (max-width: 640px) {
+  .pager { justify-content: center; }
+  .pager-links { justify-content: center; }
+}
+
 /* Admin claim tool: one row per claimed project. */
 .admin-rows { display: flex; flex-direction: column; gap: 0; }
 .admin-rows li {

@@ -74,7 +74,11 @@ export async function listProjects(opts: {
   userId?: string | null;
   /** Restrict to the projects this user has starred (their reading list). */
   starredByUserId?: string | null;
-} = {}): Promise<ProjectListItem[]> {
+  /** Page size. Omit for every match. */
+  limit?: number;
+  /** Rows to skip; only meaningful with limit. */
+  offset?: number;
+} = {}): Promise<{ items: ProjectListItem[]; total: number }> {
   const {
     categorySlug,
     q,
@@ -84,6 +88,8 @@ export async function listProjects(opts: {
     activeOnly = false,
     userId = null,
     starredByUserId = null,
+    limit,
+    offset = 0,
   } = opts;
 
   const siteStarAgg = db
@@ -187,13 +193,18 @@ export async function listProjects(opts: {
       starredByUser: sql<boolean>`exists (select 1 from ${stars} where ${stars.projectId} = ${projects.id} and ${stars.userId} = ${userId ?? ""})`,
       reviewCount: sql<number>`coalesce(${reviewAgg.n}, 0)`,
       avgRating: reviewAgg.avg,
+      // Window function: the count before LIMIT, so paging needs no second
+      // query and can never disagree with the page it accompanies.
+      total: sql<number>`count(*) over ()`,
     })
     .from(projects)
     .leftJoin(projectStats, eq(projectStats.projectId, projects.id))
     .leftJoin(siteStarAgg, eq(siteStarAgg.projectId, projects.id))
     .leftJoin(reviewAgg, eq(reviewAgg.projectId, projects.id))
     .where(conds.length ? and(...conds) : undefined)
-    .orderBy(...orderBy);
+    .orderBy(...orderBy)
+    .limit(limit ?? -1) // SQLite: -1 means no limit
+    .offset(limit ? offset : 0);
 
   const cats = rows.length
     ? await db
@@ -215,12 +226,34 @@ export async function listProjects(opts: {
     catsByProject.set(c.projectId, list);
   }
 
-  return rows.map((r) => ({
-    ...r,
+  // Mapped field by field rather than spread: the row also carries the window
+  // count, which belongs to the page, not to any single project.
+  const items: ProjectListItem[] = rows.map((r) => ({
+    id: r.id,
+    source: r.source,
+    sourceType: r.sourceType,
+    owner: r.owner,
+    repo: r.repo,
+    name: r.name,
+    tagline: r.tagline,
+    claimedById: r.claimedById,
+    description: r.description,
+    language: r.language,
+    licenseSpdx: r.licenseSpdx,
+    ghStars: r.ghStars,
+    forks: r.forks,
+    downloads: r.downloads,
+    pushedAt: r.pushedAt,
     archived: Boolean(r.archived),
+    siteStars: r.siteStars,
     starredByUser: Boolean(r.starredByUser),
+    reviewCount: r.reviewCount,
+    avgRating: r.avgRating,
     categories: catsByProject.get(r.id) ?? [],
   }));
+
+  // No rows means no window-function output; an empty page has no matches.
+  return { items, total: Number(rows[0]?.total ?? 0) };
 }
 
 /** Distinct languages and licenses present in the index, for filter dropdowns. */

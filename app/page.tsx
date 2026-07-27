@@ -11,6 +11,7 @@ import {
 } from "@/lib/projects";
 import { ProjectCard } from "@/components/project-card";
 import { BrowseControls } from "@/components/browse-controls";
+import { Pagination } from "@/components/pagination";
 import { FeaturedRotator } from "@/components/featured-rotator";
 import { IconSearch } from "@/components/icons";
 
@@ -31,6 +32,8 @@ const VALID_SORTS: SortKey[] = [
  */
 const DEFAULT_SORT: SortKey = "site-stars";
 
+const PER_PAGE = 20;
+
 export default async function HomePage({
   searchParams,
 }: {
@@ -47,14 +50,40 @@ export default async function HomePage({
     ? (sortParam as SortKey)
     : DEFAULT_SORT;
 
+  const requestedPage = Math.max(1, Number(params.page) || 1);
+
   const { userId } = await auth();
-  const [items, cats, filterOptions, featured] = await Promise.all([
-    listProjects({ q, categorySlug: category, sort, language, license, activeOnly, userId }),
+  const filters = { q, categorySlug: category, sort, language, license, activeOnly, userId };
+
+  const [firstTry, cats, filterOptions, featured] = await Promise.all([
+    listProjects({ ...filters, limit: PER_PAGE, offset: (requestedPage - 1) * PER_PAGE }),
     db.select().from(categories).orderBy(categories.sort),
     listFilterOptions(),
     listFeaturedProjects(),
   ]);
   const activeCat = cats.find((c) => c.slug === category);
+
+  // A page past the end (stale link, or a filter narrowed since) lands on the
+  // last real page instead of an empty grid. The total rides along with the
+  // rows, so an out-of-range page returns none of either — hence the probe.
+  let page = requestedPage;
+  let { items, total } = firstTry;
+  if (items.length === 0 && requestedPage > 1) {
+    const probe = await listProjects({ ...filters, limit: 1, offset: 0 });
+    page = Math.min(requestedPage, Math.max(1, Math.ceil(probe.total / PER_PAGE)));
+    ({ items, total } = await listProjects({
+      ...filters,
+      limit: PER_PAGE,
+      offset: (page - 1) * PER_PAGE,
+    }));
+  }
+
+  const pagerParams = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (k === "page") continue;
+    if (typeof v === "string" && v) pagerParams.set(k, v);
+    else if (Array.isArray(v) && v[0]) pagerParams.set(k, v[0]);
+  }
 
   return (
     <div className="container">
@@ -69,7 +98,7 @@ export default async function HomePage({
           </p>
         </div>
         <span className="meta-mono">
-          {items.length} project{items.length !== 1 ? "s" : ""}
+          {total} project{total !== 1 ? "s" : ""}
           {activeCat ? "" : " indexed"}
         </span>
       </div>
@@ -96,11 +125,19 @@ export default async function HomePage({
       </div>
 
       {items.length > 0 ? (
-        <div className="project-grid">
-          {items.map((p) => (
-            <ProjectCard key={p.id} project={p} signedIn={userId !== null} />
-          ))}
-        </div>
+        <>
+          <div className="project-grid">
+            {items.map((p) => (
+              <ProjectCard key={p.id} project={p} signedIn={userId !== null} />
+            ))}
+          </div>
+          <Pagination
+            page={page}
+            perPage={PER_PAGE}
+            total={total}
+            params={pagerParams}
+          />
+        </>
       ) : (
         <div className="empty-state">
           <div className="es-icon">
