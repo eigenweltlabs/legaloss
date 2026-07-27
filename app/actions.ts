@@ -24,7 +24,7 @@ import { verifyRepoOwnership } from "@/lib/github-ownership";
 import { verifyHfOwnership } from "@/lib/huggingface-ownership";
 import { detectSource, resolveRepo } from "@/lib/index-repo";
 import { projectHref } from "@/lib/sources";
-import { ensureCurrentUser } from "@/lib/users";
+import { ensureCurrentUser, mirrorClerkUser } from "@/lib/users";
 
 type ActionError = { ok: false; error: string };
 
@@ -501,6 +501,68 @@ export async function releaseClaim(
     .where(eq(projects.id, projectId));
 
   revalidateProject(project);
+  return { ok: true };
+}
+
+/* ============================== Claims (admin only) ============================== */
+
+/**
+ * Hand-granted claim, for maintainers who proved control out of band. The UI
+ * twin of POST /api/admin/claims — same audit method, same refusal to take a
+ * project off an existing claimant without an explicit reassign.
+ */
+export async function adminGrantClaim(input: {
+  projectId: number;
+  clerkUserId: string;
+  reassign?: boolean;
+}): Promise<{ ok: true; claimant: string; reassigned: boolean } | ActionError> {
+  const userId = await ensureCurrentUser();
+  if (!userId || !isAdminUser(userId)) {
+    return fail("Only site admins can grant claims.");
+  }
+
+  const project = await getProjectById(input.projectId);
+  if (!project) return fail("Project not found.");
+
+  const target = await mirrorClerkUser(input.clerkUserId);
+  if (!target) return fail("That account no longer exists in Clerk.");
+
+  if (project.claimedById === target.id) {
+    return { ok: true, claimant: target.label, reassigned: false };
+  }
+  if (project.claimedById && !input.reassign) {
+    return fail(
+      "This project already has a claimant. Tick “reassign” to take it over.",
+    );
+  }
+
+  const reassigned = project.claimedById !== null;
+  await commitClaim(project, target.id, target.label, "admin-grant");
+  revalidatePath("/admin/claims");
+  return { ok: true, claimant: target.label, reassigned };
+}
+
+/** Release someone else's claim; the claimant's own undo is releaseClaim. */
+export async function adminReleaseClaim(
+  projectId: number,
+): Promise<{ ok: true } | ActionError> {
+  const userId = await ensureCurrentUser();
+  if (!userId || !isAdminUser(userId)) {
+    return fail("Only site admins can release someone else's claim.");
+  }
+
+  const project = await getProjectById(projectId);
+  if (!project) return fail("Project not found.");
+  if (!project.claimedById) return fail("That project isn't claimed.");
+
+  await db
+    .update(projects)
+    .set({ claimedById: null, claimedAt: null, updatedAt: new Date() })
+    .where(eq(projects.id, projectId));
+
+  revalidateProject(project);
+  revalidatePath(`${projectHref(project)}/claim`);
+  revalidatePath("/admin/claims");
   return { ok: true };
 }
 

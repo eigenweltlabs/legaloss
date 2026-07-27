@@ -15,7 +15,14 @@ const LINKS = [
 
 const REPO_URL = "https://github.com/eigenweltlabs/legaloss";
 
-export function SiteHeader({ trackedStars }: { trackedStars: number }) {
+export function SiteHeader({
+  trackedStars,
+  isAdmin = false,
+}: {
+  trackedStars: number;
+  /** Resolved server-side from the ADMIN_USER_IDS allowlist. */
+  isAdmin?: boolean;
+}) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -63,6 +70,14 @@ export function SiteHeader({ trackedStars }: { trackedStars: number }) {
                 Starred
               </Link>
             </Show>
+            {isAdmin && (
+              <Link
+                href="/admin/claims"
+                className={pathname.startsWith("/admin") ? "is-current" : ""}
+              >
+                Admin
+              </Link>
+            )}
           </nav>
           <span className="topbar-stat" title="GitHub stars across all indexed projects">
             <IconStar filled />
@@ -130,6 +145,11 @@ export function SiteHeader({ trackedStars }: { trackedStars: number }) {
             Starred
           </Link>
         </Show>
+        {isAdmin && (
+          <Link href="/admin/claims" onClick={() => setDrawerOpen(false)}>
+            Admin
+          </Link>
+        )}
         <Link href="/submit" onClick={() => setDrawerOpen(false)}>
           Submit a project
         </Link>

@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { sql } from "drizzle-orm";
 import { Big_Shoulders, Inter, JetBrains_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
+import { isAdminUser } from "@/lib/admin";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 import { db } from "@/lib/db";
 import { projectStats } from "@/lib/db/schema";
@@ -78,6 +80,14 @@ export default async function RootLayout({
     // Unmigrated database (static prerender during `next build`): render the
     // shell without the stat instead of failing the build.
   }
+
+  let isAdmin = false;
+  try {
+    const { userId } = await auth();
+    isAdmin = isAdminUser(userId);
+  } catch {
+    // Prerender without a request scope: render the public header.
+  }
   return (
     <ClerkProvider
       appearance={clerkAppearance}
@@ -89,7 +99,7 @@ export default async function RootLayout({
         className={`${bigShoulders.variable} ${jetbrains.variable} ${inter.variable}`}
       >
         <body>
-          <SiteHeader trackedStars={trackedStars} />
+          <SiteHeader trackedStars={trackedStars} isAdmin={isAdmin} />
           <main>{children}</main>
           <SiteFooter />
           <ConsentBanner />
