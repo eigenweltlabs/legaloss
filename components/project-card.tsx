@@ -3,7 +3,14 @@ import type { ProjectListItem } from "@/lib/projects";
 import { formatCount, timeAgo } from "@/lib/format";
 import { projectHref } from "@/lib/sources";
 import { CardStar } from "@/components/card-star";
-import { IconClock, IconDownload, IconFork, IconHuggingFace, IconStar } from "@/components/icons";
+import {
+  IconClock,
+  IconDownload,
+  IconFork,
+  IconGitHub,
+  IconHuggingFace,
+  IconStar,
+} from "@/components/icons";
 
 export function ProjectCard({
   project,
@@ -25,12 +32,10 @@ export function ProjectCard({
                 .join(" · ")
             : "Uncategorized"}
         </span>
-        {isHf ? (
-          <span className="status-pill is-hf" title="Hosted on Hugging Face">
-            <IconHuggingFace />
-            {project.sourceType ?? "model"}
-          </span>
-        ) : project.claimedById ? (
+        {/* Status reads the same whatever the repo is hosted on. Hugging Face
+            projects used to spend this slot on a type label and so could never
+            show that they were maintained. */}
+        {project.claimedById ? (
           <span className="status-pill is-claimed" title="Claimed by its maintainer">
             <span className="dot" />
             Maintained
@@ -51,6 +56,14 @@ export function ProjectCard({
       </div>
       {desc ? <p className="pc-desc">{desc}</p> : <p className="pc-desc" />}
       <div className="pc-meta">
+        <span
+          className="m pc-source"
+          role="img"
+          aria-label={isHf ? "Hosted on Hugging Face" : "Hosted on GitHub"}
+          title={isHf ? "Hosted on Hugging Face" : "Hosted on GitHub"}
+        >
+          {isHf ? <IconHuggingFace /> : <IconGitHub />}
+        </span>
         <span className="m" title={isHf ? "Hugging Face likes" : "GitHub stars"}>
           <IconStar filled />
           {formatCount(project.ghStars)}
