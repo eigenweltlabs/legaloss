@@ -2,22 +2,32 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { IconSearch } from "@/components/icons";
+import { LICENSE_GROUPS, type LicenseGroup } from "@/lib/license";
 
 /** First entry is the default; keep it in sync with DEFAULT_SORT in app/page.tsx. */
 const SORTS = [
   { value: "site-stars", label: "Community stars" },
-  { value: "gh-stars", label: "GitHub stars" },
+  // One ranking across both sources: the column holds GitHub stars for GitHub
+  // repos and Hugging Face likes for Hugging Face ones.
+  { value: "stars", label: "Stars & likes" },
   { value: "rating", label: "Top rated" },
   { value: "newest", label: "Recently added" },
   { value: "active", label: "Recently active" },
 ];
 
+const LICENSE_LABELS = new Map(LICENSE_GROUPS.map((g) => [g.value, g.label]));
+
 export function BrowseControls({
+  categories,
   languages,
   licenses,
+  selectedLicense,
 }: {
+  categories: { slug: string; name: string }[];
   languages: string[];
-  licenses: string[];
+  licenses: LicenseGroup[];
+  /** Resolved server-side, so a legacy ?license=MIT link still shows a selection. */
+  selectedLicense: string;
 }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -67,6 +77,19 @@ export function BrowseControls({
       </button>
       <select
         className="select"
+        aria-label="Filter by category"
+        value={params.get("category") ?? ""}
+        onChange={(e) => update({ category: e.target.value })}
+      >
+        <option value="">All categories</option>
+        {categories.map((c) => (
+          <option key={c.slug} value={c.slug}>
+            {c.name}
+          </option>
+        ))}
+      </select>
+      <select
+        className="select"
         aria-label="Filter by language"
         value={params.get("lang") ?? ""}
         onChange={(e) => update({ lang: e.target.value })}
@@ -81,13 +104,13 @@ export function BrowseControls({
       <select
         className="select"
         aria-label="Filter by license"
-        value={params.get("license") ?? ""}
+        value={selectedLicense}
         onChange={(e) => update({ license: e.target.value })}
       >
-        <option value="">All licenses</option>
+        <option value="">Any license</option>
         {licenses.map((l) => (
           <option key={l} value={l}>
-            {l}
+            {LICENSE_LABELS.get(l) ?? l}
           </option>
         ))}
       </select>

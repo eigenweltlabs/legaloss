@@ -14,16 +14,20 @@ import { BrowseControls } from "@/components/browse-controls";
 import { Pagination } from "@/components/pagination";
 import { FeaturedRotator } from "@/components/featured-rotator";
 import { IconSearch } from "@/components/icons";
+import { isLicenseGroup, knownLicenseGroup } from "@/lib/license";
 
 export const dynamic = "force-dynamic";
 
 const VALID_SORTS: SortKey[] = [
-  "gh-stars",
+  "stars",
   "site-stars",
   "rating",
   "newest",
   "active",
 ];
+
+/** Sort keys that used to exist, pointed at what replaced them. */
+const LEGACY_SORTS: Record<string, SortKey> = { "gh-stars": "stars" };
 
 /**
  * The index leads with its own community's signal rather than GitHub's.
@@ -43,12 +47,18 @@ export default async function HomePage({
   const q = typeof params.q === "string" ? params.q : undefined;
   const category = typeof params.category === "string" ? params.category : undefined;
   const language = typeof params.lang === "string" ? params.lang : undefined;
-  const license = typeof params.license === "string" ? params.license : undefined;
+  // The filter used to take raw SPDX ids, so ?license=MIT is a link that once
+  // worked; resolve it to the group that id belongs to. Anything we do not
+  // recognize is dropped rather than being read as "other".
+  const licenseParam = typeof params.license === "string" ? params.license : "";
+  const license = isLicenseGroup(licenseParam)
+    ? licenseParam
+    : (knownLicenseGroup(licenseParam) ?? undefined);
   const activeOnly = params.active === "1";
   const sortParam = typeof params.sort === "string" ? params.sort : DEFAULT_SORT;
   const sort = (VALID_SORTS as string[]).includes(sortParam)
     ? (sortParam as SortKey)
-    : DEFAULT_SORT;
+    : (LEGACY_SORTS[sortParam] ?? DEFAULT_SORT);
 
   const requestedPage = Math.max(1, Number(params.page) || 1);
 
@@ -57,7 +67,14 @@ export default async function HomePage({
 
   const [firstTry, cats, filterOptions, featured] = await Promise.all([
     listProjects({ ...filters, limit: PER_PAGE, offset: (requestedPage - 1) * PER_PAGE }),
-    db.select().from(categories).orderBy(categories.sort),
+    db
+      .select({
+        slug: categories.slug,
+        name: categories.name,
+        blurb: categories.blurb,
+      })
+      .from(categories)
+      .orderBy(categories.sort),
     listFilterOptions(),
     listFeaturedProjects(),
   ]);
@@ -107,22 +124,12 @@ export default async function HomePage({
 
       <Suspense>
         <BrowseControls
+          categories={cats}
           languages={filterOptions.languages}
           licenses={filterOptions.licenses}
+          selectedLicense={license ?? ""}
         />
       </Suspense>
-
-      <div className="cat-row">
-        <CatChip href="/" label="All" active={!category} />
-        {cats.map((c) => (
-          <CatChip
-            key={c.slug}
-            href={`/?category=${c.slug}`}
-            label={c.name}
-            active={c.slug === category}
-          />
-        ))}
-      </div>
 
       {items.length > 0 ? (
         <>
@@ -169,21 +176,5 @@ export default async function HomePage({
         </Link>
       </div>
     </div>
-  );
-}
-
-function CatChip({
-  href,
-  label,
-  active,
-}: {
-  href: string;
-  label: string;
-  active: boolean;
-}) {
-  return (
-    <Link href={href} className={`glass-chip${active ? " is-active" : ""}`}>
-      {label}
-    </Link>
   );
 }

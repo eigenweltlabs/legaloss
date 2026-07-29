@@ -4,6 +4,7 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
+import { normalizeSpdx } from "@/lib/license";
 import * as schema from "./schema";
 import { CATEGORY_SEED } from "./seed-categories";
 import { STARTER_PROJECTS } from "./starter-projects";
@@ -163,10 +164,7 @@ async function seedStarters(database: Db) {
           openIssues: d.open_issues_count ?? 0,
           subscribers: d.subscribers_count ?? 0,
           language: d.language ?? null,
-          licenseSpdx:
-            d.license?.spdx_id && d.license.spdx_id !== "NOASSERTION"
-              ? d.license.spdx_id
-              : null,
+          licenseSpdx: normalizeSpdx(d.license?.spdx_id),
           licenseName: d.license?.name ?? null,
           topics: Array.isArray(d.topics) ? d.topics : [],
           description: d.description ?? null,

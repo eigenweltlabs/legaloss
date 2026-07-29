@@ -563,32 +563,26 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 .section-head { display: flex; flex-direction: column; gap: 14px; margin-bottom: clamp(24px, 3.5vh, 40px); }
 .section-head .row { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
 
-/* Browse toolbar */
+/* Browse toolbar. Category used to be a chip row below this bar; folding it in
+   makes six controls, too many for one line at any realistic width. So search
+   takes its own row — it is the primary action — and the filters line up under
+   it. Two deliberate rows, rather than one row that wraps into a ragged second.
+   The selects flex from a small basis with min-width:0 so the longest option
+   label cannot force a select wide enough to break the row. */
 .browse-bar {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   padding: 12px;
   border-radius: var(--radius-lg);
-  margin-bottom: 16px;
+  margin-bottom: 26px;
 }
-.browse-bar .field { flex: 1; min-width: 220px; }
+.browse-bar .field { flex: 1 1 100%; min-width: 0; }
+.browse-bar .select { flex: 1 1 150px; min-width: 0; }
 .browse-sort-label { margin-left: auto; }
-.cat-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 26px; }
 
 @media (max-width: 720px) {
   .browse-bar { gap: 8px; padding: 10px; }
-  .browse-bar .field { flex: 1 1 100%; min-width: 0; }
-  .browse-bar .select { flex: 1 1 calc(50% - 24px); min-width: 0; }
+  .browse-bar .select { flex: 1 1 calc(50% - 24px); }
   .browse-sort-label { display: none; }
-  /* One swipeable row instead of a tall chip cloud pushing the grid down. */
-  .cat-row {
-    flex-wrap: nowrap; overflow-x: auto;
-    margin-left: -20px; margin-right: -20px;
-    padding: 2px 20px 8px;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .cat-row::-webkit-scrollbar { display: none; }
-  .cat-row .glass-chip { flex-shrink: 0; }
 }
 
 /* ==========================================================================

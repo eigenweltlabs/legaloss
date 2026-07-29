@@ -6,6 +6,7 @@ import {
   parseHuggingFaceUrl,
   type HfType,
 } from "@/lib/huggingface";
+import { normalizeSpdx } from "@/lib/license";
 import type { projectStats } from "@/lib/db/schema";
 
 export type Detected =
@@ -60,7 +61,7 @@ export async function resolveRepo(
           subscribers: 0,
           downloads: d.downloads,
           language: d.pipelineTag ?? d.libraryName,
-          licenseSpdx: d.licenseId,
+          licenseSpdx: normalizeSpdx(d.licenseId),
           licenseName: d.licenseId,
           topics: d.tags,
           description: d.description,
@@ -94,7 +95,7 @@ export async function resolveRepo(
         subscribers: d.subscribers,
         downloads: 0,
         language: d.language,
-        licenseSpdx: d.licenseSpdx,
+        licenseSpdx: normalizeSpdx(d.licenseSpdx),
         licenseName: d.licenseName,
         topics: d.topics,
         description: d.description,

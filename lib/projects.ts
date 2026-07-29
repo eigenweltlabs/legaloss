@@ -1,5 +1,18 @@
 import "server-only";
-import { and, asc, desc, eq, gte, inArray, isNotNull, like, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  like,
+  notInArray,
+  or,
+  sql,
+} from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   categories,
@@ -14,6 +27,15 @@ import {
   users,
 } from "@/lib/db/schema";
 import { fetchContributors, fetchOpenIssueCount, fetchReadmeHtml, fetchRepo } from "@/lib/github";
+import {
+  CLASSIFIED_SPDX_IDS,
+  isLicenseGroup,
+  licenseGroup,
+  LICENSE_GROUPS,
+  normalizeSpdx,
+  spdxIdsInGroup,
+  type LicenseGroup,
+} from "@/lib/license";
 import {
   fetchHfReadmeHtml,
   fetchHfRepo,
@@ -49,7 +71,8 @@ export type ProjectListItem = {
 };
 
 export type SortKey =
-  | "gh-stars"
+  /** GitHub stars and Hugging Face likes ranked together, in one list. */
+  | "stars"
   | "site-stars"
   | "rating"
   | "newest"
@@ -66,7 +89,7 @@ export async function listProjects(opts: {
   sort?: SortKey;
   /** Filter to a primary GitHub language, e.g. "Python". */
   language?: string;
-  /** Filter to an SPDX license id, e.g. "MIT". */
+  /** Filter to a license obligation group, e.g. "permissive". Ignored if unknown. */
   license?: string;
   /** Only projects pushed within ACTIVE_WINDOW_DAYS. */
   activeOnly?: boolean;
@@ -147,7 +170,21 @@ export async function listProjects(opts: {
     );
   }
   if (language) conds.push(eq(projectStats.language, language));
-  if (license) conds.push(eq(projectStats.licenseSpdx, license));
+  if (license && isLicenseGroup(license)) {
+    // Compared lower-cased: the column still holds both spellings for any row
+    // not yet rewritten by the normalization backfill, and a refreshed Hugging
+    // Face row can reintroduce one at any time.
+    const spdx = sql`lower(${projectStats.licenseSpdx})`;
+    conds.push(
+      license === "other"
+        ? // The complement: no license recorded, or one we do not classify.
+          or(
+            isNull(projectStats.licenseSpdx),
+            notInArray(spdx, CLASSIFIED_SPDX_IDS),
+          )!
+        : inArray(spdx, spdxIdsInGroup(license)),
+    );
+  }
   if (activeOnly) {
     conds.push(
       gte(
@@ -158,7 +195,9 @@ export async function listProjects(opts: {
   }
 
   const orderBy = {
-    "gh-stars": [desc(projectStats.stars)],
+    // One column holds GitHub stars and Hugging Face likes, so both sources
+    // rank in a single list.
+    stars: [desc(projectStats.stars), desc(projectStats.downloads)],
     "site-stars": [desc(sql`coalesce(${siteStarAgg.n}, 0)`), desc(projectStats.stars)],
     rating: [desc(sql`coalesce(${reviewAgg.avg}, 0)`), desc(sql`coalesce(${reviewAgg.n}, 0)`)],
     newest: [desc(projects.createdAt)],
@@ -256,26 +295,28 @@ export async function listProjects(opts: {
   return { items, total: Number(rows[0]?.total ?? 0) };
 }
 
-/** Distinct languages and licenses present in the index, for filter dropdowns. */
+/** Options for the browse filters: languages actually present, license groups in use. */
 export async function listFilterOptions(): Promise<{
   languages: string[];
-  licenses: string[];
+  licenses: LicenseGroup[];
 }> {
   const [langRows, licenseRows] = await Promise.all([
+    // GitHub only. The language column doubles as Hugging Face's pipeline tag,
+    // so an unscoped query offered "text-generation" and "gguf" as languages.
     db
       .selectDistinct({ v: projectStats.language })
       .from(projectStats)
-      .where(isNotNull(projectStats.language))
+      .innerJoin(projects, eq(projects.id, projectStats.projectId))
+      .where(and(isNotNull(projectStats.language), eq(projects.source, "github")))
       .orderBy(asc(projectStats.language)),
-    db
-      .selectDistinct({ v: projectStats.licenseSpdx })
-      .from(projectStats)
-      .where(isNotNull(projectStats.licenseSpdx))
-      .orderBy(asc(projectStats.licenseSpdx)),
+    db.selectDistinct({ v: projectStats.licenseSpdx }).from(projectStats),
   ]);
+
+  const present = new Set(licenseRows.map((r) => licenseGroup(r.v)));
   return {
     languages: langRows.map((r) => r.v).filter((v): v is string => v !== null),
-    licenses: licenseRows.map((r) => r.v).filter((v): v is string => v !== null),
+    // Kept in the canonical order rather than the order encountered.
+    licenses: LICENSE_GROUPS.map((g) => g.value).filter((g) => present.has(g)),
   };
 }
 
@@ -496,7 +537,7 @@ async function freshGithubStats(project: StatsSubject) {
     subscribers: d.subscribers,
     downloads: 0,
     language: d.language,
-    licenseSpdx: d.licenseSpdx,
+    licenseSpdx: normalizeSpdx(d.licenseSpdx),
     licenseName: d.licenseName,
     topics: d.topics,
     description: d.description,
@@ -520,7 +561,7 @@ async function freshHfStats(project: StatsSubject) {
     subscribers: 0,
     downloads: d.downloads,
     language: d.pipelineTag ?? d.libraryName,
-    licenseSpdx: d.licenseId,
+    licenseSpdx: normalizeSpdx(d.licenseId),
     licenseName: d.licenseId,
     topics: d.tags,
     description: d.description,
