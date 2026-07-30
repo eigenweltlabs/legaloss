@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
 import { getHfProject } from "@/lib/projects";
+import { canEditProject } from "@/lib/maintainers";
 import { hasHfConnection } from "@/lib/huggingface-ownership";
 import { isHfOrganization } from "@/lib/huggingface";
 import { CLAIM_FILE_NAME, claimToken } from "@/lib/claim-file";
@@ -29,9 +30,10 @@ export default async function HfClaimPage({
   const projectPath = projectHref(project);
   const claimPath = `${projectPath}/claim`;
 
-  const alreadyClaimedByOther =
-    project.claimedById !== null && project.claimedById !== userId;
-  const claimedByMe = userId !== null && project.claimedById === userId;
+  // Claimant or a maintainer the claimant added — either way, editing is open.
+  const canEdit = await canEditProject(project, userId);
+  const alreadyClaimedByOther = project.claimedById !== null && !canEdit;
+  const claimedByMe = canEdit;
   const hfConnected = userId ? await hasHfConnection(userId) : false;
   // Org-owned repos are the only ones that cost a repository scope; personal
   // ones verify off the identity endpoint alone.

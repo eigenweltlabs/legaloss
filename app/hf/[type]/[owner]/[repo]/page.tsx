@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { categories, projectCategories, projectStats, users } from "@/lib/db/schema";
 import { isAdminUser } from "@/lib/admin";
+import { canEditProject } from "@/lib/maintainers";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { hfTypeLabel } from "@/lib/huggingface";
 import { projectHref, sourceExternalUrl } from "@/lib/sources";
@@ -91,7 +92,7 @@ export default async function HfProjectPage({ params }: { params: Params }) {
     custom.customHtml ??
     (stats ? await ensureFreshReadme(project, "main") : null);
 
-  const isClaimant = userId !== null && project.claimedById === userId;
+  const canEdit = await canEditProject(project, userId ?? null);
   const isAdmin = isAdminUser(userId);
   const avgRating =
     social.reviews.length > 0
@@ -179,7 +180,7 @@ export default async function HfProjectPage({ params }: { params: Params }) {
                 Website
               </a>
             )}
-            {isClaimant ? (
+            {canEdit ? (
               <Link href={`${projectHref(project)}/edit`} className="btn btn-secondary">
                 <IconPencil />
                 Edit

@@ -12,10 +12,13 @@ export function EditForm({
   projectPath,
   categories,
   initial,
+  isClaimant = true,
 }: {
   projectId: number;
   projectPath: string;
   categories: Cat[];
+  /** Only the claimant may release the claim; added maintainers cannot. */
+  isClaimant?: boolean;
   initial: {
     name: string;
     tagline: string;
@@ -158,7 +161,9 @@ export function EditForm({
       {error && <div className="notice is-error">{error}</div>}
 
       <div className="row-between">
-        {!releasing ? (
+        {!isClaimant ? (
+          <span />
+        ) : !releasing ? (
           <button
             type="button"
             className="btn btn-danger btn-sm"

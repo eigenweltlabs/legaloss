@@ -93,6 +93,21 @@ function ensureAdditiveColumns(sqlite: Database.Database) {
   sqlite.exec(
     "CREATE INDEX IF NOT EXISTS projects_featured_idx ON projects (featured)",
   );
+  sqlite.exec(`CREATE TABLE IF NOT EXISTS project_maintainers (
+    id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+    project_id integer NOT NULL,
+    github_login text NOT NULL,
+    added_by_id text,
+    created_at integer DEFAULT (unixepoch()) NOT NULL,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON UPDATE no action ON DELETE cascade,
+    FOREIGN KEY (added_by_id) REFERENCES users(id) ON UPDATE no action ON DELETE no action
+  )`);
+  sqlite.exec(
+    "CREATE UNIQUE INDEX IF NOT EXISTS project_maintainers_project_login_unique ON project_maintainers (project_id, github_login)",
+  );
+  sqlite.exec(
+    "CREATE INDEX IF NOT EXISTS project_maintainers_login_idx ON project_maintainers (github_login)",
+  );
 }
 
 type Db = ReturnType<typeof createDb>;

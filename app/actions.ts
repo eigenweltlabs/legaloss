@@ -10,6 +10,7 @@ import {
   claims,
   comments,
   projectCategories,
+  projectMaintainers,
   projectReadmes,
   projects,
   projectStats,
@@ -19,6 +20,7 @@ import {
 } from "@/lib/db/schema";
 import { isAdminUser } from "@/lib/admin";
 import { autoCategorize } from "@/lib/auto-categories";
+import { canEditProject, normalizeGithubLogin } from "@/lib/maintainers";
 import { CLAIM_FILE_NAME, claimToken, verifyClaimFile } from "@/lib/claim-file";
 import { verifyRepoOwnership } from "@/lib/github-ownership";
 import { verifyHfOwnership } from "@/lib/huggingface-ownership";
@@ -499,8 +501,86 @@ export async function releaseClaim(
     .update(projects)
     .set({ claimedById: null, claimedAt: null, updatedAt: new Date() })
     .where(eq(projects.id, projectId));
+  // Grants belong to the claimant; they don't outlive the claim.
+  await db
+    .delete(projectMaintainers)
+    .where(eq(projectMaintainers.projectId, projectId));
 
   revalidateProject(project);
+  return { ok: true };
+}
+
+/* ============================== Additional maintainers (claimant only) ============================== */
+
+const maintainerSchema = z.object({
+  projectId: z.number().int(),
+  githubLogin: z.string().trim().min(1, "Enter a GitHub username.").max(300),
+});
+
+/**
+ * Grant maintainer rights to another GitHub account. The grant is keyed on the
+ * login alone: whenever a member with that GitHub account connected signs in,
+ * they can edit this project as if they had claimed it themselves.
+ */
+export async function addProjectMaintainer(
+  input: z.infer<typeof maintainerSchema>,
+): Promise<{ ok: true; githubLogin: string } | ActionError> {
+  const userId = await ensureCurrentUser();
+  if (!userId) return fail("Sign in first.");
+
+  const body = maintainerSchema.safeParse(input);
+  if (!body.success) return fail(body.error.issues[0]?.message ?? "Invalid input.");
+
+  const project = await getProjectById(body.data.projectId);
+  if (!project) return fail("Project not found.");
+  if (project.claimedById !== userId) {
+    return fail("Only the claimant can add maintainers.");
+  }
+
+  const login = normalizeGithubLogin(body.data.githubLogin);
+  if (!login) {
+    return fail("That doesn't look like a GitHub username.");
+  }
+
+  await db
+    .insert(projectMaintainers)
+    .values({ projectId: project.id, githubLogin: login, addedById: userId })
+    .onConflictDoNothing();
+
+  revalidateProject(project);
+  revalidatePath(`${projectHref(project)}/edit`);
+  return { ok: true, githubLogin: login };
+}
+
+export async function removeProjectMaintainer(
+  input: z.infer<typeof maintainerSchema>,
+): Promise<{ ok: true } | ActionError> {
+  const userId = await ensureCurrentUser();
+  if (!userId) return fail("Sign in first.");
+
+  const body = maintainerSchema.safeParse(input);
+  if (!body.success) return fail(body.error.issues[0]?.message ?? "Invalid input.");
+
+  const project = await getProjectById(body.data.projectId);
+  if (!project) return fail("Project not found.");
+  if (project.claimedById !== userId) {
+    return fail("Only the claimant can remove maintainers.");
+  }
+
+  const login = normalizeGithubLogin(body.data.githubLogin);
+  if (!login) return fail("That doesn't look like a GitHub username.");
+
+  await db
+    .delete(projectMaintainers)
+    .where(
+      and(
+        eq(projectMaintainers.projectId, project.id),
+        eq(projectMaintainers.githubLogin, login),
+      ),
+    );
+
+  revalidateProject(project);
+  revalidatePath(`${projectHref(project)}/edit`);
   return { ok: true };
 }
 
@@ -559,6 +639,10 @@ export async function adminReleaseClaim(
     .update(projects)
     .set({ claimedById: null, claimedAt: null, updatedAt: new Date() })
     .where(eq(projects.id, projectId));
+  // Grants belong to the claimant; they don't outlive the claim.
+  await db
+    .delete(projectMaintainers)
+    .where(eq(projectMaintainers.projectId, projectId));
 
   revalidateProject(project);
   revalidatePath(`${projectHref(project)}/claim`);
@@ -610,7 +694,7 @@ export async function updateProjectReadme(
 
   const project = await getProjectById(body.data.projectId);
   if (!project) return fail("Project not found.");
-  if (project.claimedById !== userId) {
+  if (!(await canEditProject(project, userId))) {
     return fail("Only the verified maintainer can edit the README.");
   }
 
@@ -645,7 +729,7 @@ export async function resetProjectReadme(
 
   const project = await getProjectById(projectId);
   if (!project) return fail("Project not found.");
-  if (project.claimedById !== userId) {
+  if (!(await canEditProject(project, userId))) {
     return fail("Only the verified maintainer can edit the README.");
   }
 
@@ -716,7 +800,7 @@ export async function updateProject(
 
   const project = await getProjectById(body.data.projectId);
   if (!project) return fail("Project not found.");
-  if (project.claimedById !== userId) {
+  if (!(await canEditProject(project, userId))) {
     return fail("Only the verified maintainer can edit this project.");
   }
 

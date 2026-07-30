@@ -211,6 +211,34 @@ export const reviews = sqliteTable(
   ],
 );
 
+/**
+ * GitHub accounts the claimant has granted maintainer rights to. Matched
+ * against the login of a member's connected GitHub account, so the grant takes
+ * effect the moment that person signs in with GitHub — no claim flow needed.
+ */
+export const projectMaintainers = sqliteTable(
+  "project_maintainers",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    /** Stored lowercased; GitHub logins are case-insensitive. */
+    githubLogin: text("github_login").notNull(),
+    addedById: text("added_by_id").references(() => users.id),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (t) => [
+    uniqueIndex("project_maintainers_project_login_unique").on(
+      t.projectId,
+      t.githubLogin,
+    ),
+    index("project_maintainers_login_idx").on(t.githubLogin),
+  ],
+);
+
 /** Audit log of successful ownership claims. Current claimant lives on projects.claimedById. */
 export const claims = sqliteTable(
   "claims",

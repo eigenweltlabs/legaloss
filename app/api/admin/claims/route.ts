@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { claims, projects } from "@/lib/db/schema";
+import { claims, projectMaintainers, projects } from "@/lib/db/schema";
 import { isAdminRequest } from "@/lib/admin-token";
 import { hfKey } from "@/lib/huggingface";
 import { detectSource } from "@/lib/index-repo";
@@ -190,6 +190,10 @@ export async function DELETE(request: Request) {
       .update(projects)
       .set({ claimedById: null, claimedAt: null, updatedAt: new Date() })
       .where(eq(projects.id, project.id));
+    // Grants belong to the claimant; they don't outlive the claim.
+    await db
+      .delete(projectMaintainers)
+      .where(eq(projectMaintainers.projectId, project.id));
     revalidatePath(projectHref(project));
     revalidatePath(`${projectHref(project)}/claim`);
     results.push({ repo, status: "released" });

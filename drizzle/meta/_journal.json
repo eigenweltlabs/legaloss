@@ -29,6 +29,13 @@
       "when": 1784986631062,
       "tag": "0003_huggingface-source",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1785385621056,
+      "tag": "0004_additional-maintainers",
+      "breakpoints": true
     }
   ]
 }
