@@ -393,6 +393,16 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 .status-pill.is-hf { background: var(--butter); color: var(--ink-700); }
 .status-pill.is-hf svg { width: 12px; height: 12px; }
 
+/* Compact claimed marker on project cards — the full "Maintained" pill was
+   too loud there; the tooltip carries the wording. */
+.claimed-check {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--forest-200); color: var(--forest);
+}
+.claimed-check svg { width: 11px; height: 11px; }
+
 /* Hugging Face avatar tile in the featured strip (no deterministic avatar URL). */
 .fc-avatar {
   display: inline-flex; align-items: center; justify-content: center;
