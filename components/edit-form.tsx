@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { releaseClaim, updateProject } from "@/app/actions";
+import { NoteEditor } from "@/components/note-editor";
+import { noteToHtml } from "@/lib/note";
 import { IconCheck } from "@/components/icons";
 
 type Cat = { slug: string; name: string };
@@ -31,7 +33,10 @@ export function EditForm({
   const [name, setName] = useState(initial.name);
   const [tagline, setTagline] = useState(initial.tagline);
   const [websiteUrl, setWebsiteUrl] = useState(initial.websiteUrl);
-  const [maintainerNote, setMaintainerNote] = useState(initial.maintainerNote);
+  // Pre-editor notes are plain text; the editor works in HTML throughout.
+  const [maintainerNote, setMaintainerNote] = useState(() =>
+    noteToHtml(initial.maintainerNote),
+  );
   const [selected, setSelected] = useState<string[]>(initial.categorySlugs);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -120,18 +125,14 @@ export function EditForm({
         <label className="form-label" htmlFor="maintainer-note">
           Maintainer&apos;s note
         </label>
-        <textarea
+        <NoteEditor
           id="maintainer-note"
-          className="textarea"
-          maxLength={4000}
-          rows={6}
-          placeholder="What it does, who it's for, how to get started — in your own words."
-          value={maintainerNote}
-          onChange={(e) => setMaintainerNote(e.target.value)}
+          initialHtml={maintainerNote}
+          onChange={setMaintainerNote}
         />
         <p className="form-hint">
-          Shown above the README on your project page. Plain text; blank lines
-          start a new paragraph.
+          What it does, who it&apos;s for, how to get started — in your own
+          words. Shown above the README on your project page.
         </p>
       </div>
 

@@ -20,6 +20,7 @@ import { formatCount, formatDate, timeAgo } from "@/lib/format";
 import { StarButton } from "@/components/star-button";
 import { CommentComposer } from "@/components/comment-composer";
 import { MaintainerCardExtras } from "@/components/maintainer-card-extras";
+import { MaintainerNote } from "@/components/maintainer-note";
 import { FeatureToggle } from "@/components/feature-toggle";
 import { ReviewComposer } from "@/components/review-composer";
 import { EntryDelete } from "@/components/entry-delete";
@@ -248,14 +249,7 @@ export default async function ProjectPage({ params }: { params: Params }) {
 
       <div className="detail-grid">
         <div>
-          {project.maintainerNote && (
-            <div className="card maintainer-note">
-              <span className="eyebrow">From the maintainer</span>
-              {project.maintainerNote.split(/\n{2,}/).map((para, i) => (
-                <p key={i}>{para}</p>
-              ))}
-            </div>
-          )}
+          {project.maintainerNote && <MaintainerNote note={project.maintainerNote} />}
           {readmeHtml ? (
             <>
               <article

@@ -1192,14 +1192,43 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
    ========================================================================== */
 
 .maintainer-note {
-  display: flex; flex-direction: column; gap: 10px;
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 20px 22px 22px;
   margin-bottom: 16px;
   border-left: 3px solid var(--forest);
 }
-.maintainer-note p {
-  font-family: var(--font-sans); font-size: 14px; line-height: 1.6;
-  color: var(--ink-700); white-space: pre-line; margin: 0;
+
+/* Shared typography for the rendered note and the editor's ProseMirror
+   surface, so maintainers edit exactly what readers see. */
+.note-prose { display: flex; flex-direction: column; gap: 12px; }
+.note-prose p {
+  font-family: var(--font-sans); font-size: 14px; line-height: 1.65;
+  color: var(--ink-700); margin: 0; max-width: 64ch;
 }
+.note-prose a { color: var(--vermilion-700); }
+.note-prose a:hover { text-decoration: underline; }
+.note-prose ol, .note-prose ul {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: 7px;
+}
+.note-prose ol { counter-reset: note-item; }
+.note-prose li {
+  position: relative; padding-left: 30px;
+  font-family: var(--font-sans); font-size: 14px; line-height: 1.5;
+  color: var(--ink-700);
+}
+.note-prose li p { margin: 0; }
+.note-prose li::before {
+  position: absolute; left: 0; top: 0.2em;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em;
+  color: var(--forest);
+}
+.note-prose ol > li { counter-increment: note-item; }
+.note-prose ol > li::before { content: counter(note-item, decimal-leading-zero); }
+.note-prose ul > li::before { content: "—"; }
+
+.note-editor-surface { padding: 14px 16px; }
+.note-editor-surface .ProseMirror { outline: none; min-height: 140px; }
 
 /* ==========================================================================
    Cookie consent — quiet card, bottom left
