@@ -18,8 +18,6 @@ A community index of open-source legal software, live at
    only route that works for Hugging Face organizations without also granting
    `read-repos` over private repositories. Only the verified claimant can edit a
    project's name, tagline, website, categories, and maintainer's note.
-4. **Featuring is editorial.** Admins (env allowlist, never in the repo) pick
-   featured projects; the pick shows in the homepage featured strip.
 
 Browsing needs no account. Signed-in members can star, review, comment, and
 submit projects.
