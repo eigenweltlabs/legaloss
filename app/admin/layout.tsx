@@ -20,7 +20,7 @@ export default async function AdminLayout({
 
   return (
     <div className="container">
-      <div className="narrow">
+      <div className="admin-wide">
         <div className="section-head" style={{ marginBottom: 20 }}>
           <span className="eyebrow">Admin</span>
         </div>
