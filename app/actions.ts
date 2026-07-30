@@ -23,6 +23,7 @@ import { autoCategorize } from "@/lib/auto-categories";
 import { canEditProject, normalizeGithubLogin } from "@/lib/maintainers";
 import { CLAIM_FILE_NAME, claimToken, verifyClaimFile } from "@/lib/claim-file";
 import { verifyRepoOwnership } from "@/lib/github-ownership";
+import { sanitizeNote } from "@/lib/note-sanitize";
 import { verifyHfOwnership } from "@/lib/huggingface-ownership";
 import { detectSource, resolveRepo } from "@/lib/index-repo";
 import { projectHref } from "@/lib/sources";
@@ -785,7 +786,9 @@ const editSchema = z.object({
     .max(300)
     .optional()
     .or(z.literal("")),
-  maintainerNote: z.string().trim().max(4000).optional(),
+  // Rich HTML from the note editor; sanitized below. The cap leaves markup
+  // overhead on top of the old 4,000-character plain-text limit.
+  maintainerNote: z.string().trim().max(10_000).optional(),
   categorySlugs: z.array(z.string()).min(1, "Pick at least one category.").max(4),
 });
 
@@ -816,7 +819,9 @@ export async function updateProject(
       name: body.data.name,
       tagline: body.data.tagline || null,
       websiteUrl: body.data.websiteUrl || null,
-      maintainerNote: body.data.maintainerNote || null,
+      maintainerNote: body.data.maintainerNote
+        ? sanitizeNote(body.data.maintainerNote)
+        : null,
       updatedAt: new Date(),
     })
     .where(eq(projects.id, project.id));
