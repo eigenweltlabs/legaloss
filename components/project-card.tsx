@@ -4,6 +4,7 @@ import { formatCount, timeAgo } from "@/lib/format";
 import { projectHref } from "@/lib/sources";
 import { CardStar } from "@/components/card-star";
 import {
+  IconCheck,
   IconClock,
   IconDownload,
   IconFork,
@@ -36,9 +37,13 @@ export function ProjectCard({
             projects used to spend this slot on a type label and so could never
             show that they were maintained. */}
         {project.claimedById ? (
-          <span className="status-pill is-claimed" title="Claimed by its maintainer">
-            <span className="dot" />
-            Maintained
+          <span
+            className="claimed-check"
+            role="img"
+            aria-label="Claimed"
+            title="Claimed"
+          >
+            <IconCheck />
           </span>
         ) : project.archived ? (
           <span className="status-pill is-archived">Archived</span>
