@@ -173,6 +173,14 @@ export function IconPencil(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function IconChevronDown(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base(props)}>
+      <path d="M5 8l5 5 5-5" />
+    </svg>
+  );
+}
+
 export function IconClock(props: SVGProps<SVGSVGElement>) {
   return (
     <svg {...base(props)}>

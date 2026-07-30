@@ -19,6 +19,7 @@ import {
   comments,
   projectCategories,
   projectContributors,
+  projectMaintainers,
   projectReadmes,
   projects,
   projectStats,
@@ -97,6 +98,11 @@ export async function listProjects(opts: {
   userId?: string | null;
   /** Restrict to the projects this user has starred (their reading list). */
   starredByUserId?: string | null;
+  /**
+   * Restrict to the projects this user maintains: claimed by them, or granted
+   * to their connected GitHub account via projectMaintainers.
+   */
+  maintainedBy?: { userId: string; githubLogin: string | null } | null;
   /** Page size. Omit for every match. */
   limit?: number;
   /** Rows to skip; only meaningful with limit. */
@@ -111,6 +117,7 @@ export async function listProjects(opts: {
     activeOnly = false,
     userId = null,
     starredByUserId = null,
+    maintainedBy = null,
     limit,
     offset = 0,
   } = opts;
@@ -167,6 +174,25 @@ export async function listProjects(opts: {
           .from(stars)
           .where(eq(stars.userId, starredByUserId)),
       ),
+    );
+  }
+  if (maintainedBy) {
+    const claimed = eq(projects.claimedById, maintainedBy.userId);
+    conds.push(
+      maintainedBy.githubLogin
+        ? or(
+            claimed,
+            inArray(
+              projects.id,
+              db
+                .select({ id: projectMaintainers.projectId })
+                .from(projectMaintainers)
+                .where(
+                  eq(projectMaintainers.githubLogin, maintainedBy.githubLogin),
+                ),
+            ),
+          )!
+        : claimed,
     );
   }
   if (language) conds.push(eq(projectStats.language, language));

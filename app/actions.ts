@@ -48,7 +48,7 @@ function revalidateProject(p: SourceShape | { owner: string; repo: string }) {
   revalidatePath("/projects");
   revalidatePath("/");
   // Starring is the one mutation that changes membership of a personal list.
-  revalidatePath("/starred");
+  revalidatePath("/my-projects");
 }
 
 async function getProjectById(id: number) {

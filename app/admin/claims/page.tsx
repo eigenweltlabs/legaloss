@@ -22,7 +22,7 @@ export default async function AdminClaimsPage() {
   );
 
   return (
-    <div className="narrow">
+    <div className="admin-wide">
       <div className="section-head">
         <h1 className="display-m">Claims.</h1>
         <p className="body-l">
