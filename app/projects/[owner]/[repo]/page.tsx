@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { categories, projectCategories, projectStats, users } from "@/lib/db/schema";
 import { isAdminUser } from "@/lib/admin";
+import { canEditProject } from "@/lib/maintainers";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import {
   ensureFreshContributors,
@@ -102,7 +103,7 @@ export default async function ProjectPage({ params }: { params: Params }) {
     custom.customHtml ??
     (stats ? await ensureFreshReadme(project, stats.defaultBranch ?? "main") : null);
 
-  const isClaimant = userId !== null && project.claimedById === userId;
+  const canEdit = await canEditProject(project, userId ?? null);
   const isAdmin = isAdminUser(userId);
   const avgRating =
     social.reviews.length > 0
@@ -207,7 +208,7 @@ export default async function ProjectPage({ params }: { params: Params }) {
                 Website
               </a>
             )}
-            {isClaimant ? (
+            {canEdit ? (
               <Link
                 href={`/projects/${project.owner}/${project.repo}/edit`}
                 className="btn btn-secondary"

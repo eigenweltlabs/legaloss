@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
 import { getProject } from "@/lib/projects";
+import { canEditProject } from "@/lib/maintainers";
 import { hasGithubConnection } from "@/lib/github-ownership";
 import { CLAIM_FILE_NAME, claimToken } from "@/lib/claim-file";
 import { ClaimButton } from "@/components/claim-button";
@@ -27,9 +28,10 @@ export default async function ClaimPage({
   const projectPath = `/projects/${project.owner}/${project.repo}`;
   const claimPath = `${projectPath}/claim`;
 
-  const alreadyClaimedByOther =
-    project.claimedById !== null && project.claimedById !== userId;
-  const claimedByMe = userId !== null && project.claimedById === userId;
+  // Claimant or a maintainer the claimant added — either way, editing is open.
+  const canEdit = await canEditProject(project, userId);
+  const alreadyClaimedByOther = project.claimedById !== null && !canEdit;
+  const claimedByMe = canEdit;
   const githubConnected = userId ? await hasGithubConnection(userId) : false;
 
   return (
