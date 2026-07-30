@@ -89,8 +89,10 @@ export default async function HfEditPage({
           <div style={{ marginTop: 48 }}>
             <h2 className="form-label">Additional maintainers</h2>
             <p className="form-hint" style={{ margin: "0 0 14px" }}>
-              Grant other GitHub accounts the same editing rights. They take
+              Grant other GitHub accounts the same editing rights; they take
               effect as soon as that person signs in with GitHub connected.
+              Adding and removing saves instantly — the Save button above
+              doesn&apos;t apply here.
             </p>
             <MaintainerManager
               projectId={project.id}

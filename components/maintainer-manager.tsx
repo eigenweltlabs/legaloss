@@ -21,15 +21,18 @@ export function MaintainerManager({
   const router = useRouter();
   const [login, setLogin] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [confirmation, setConfirmation] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   function add() {
     if (!login.trim()) return;
     setError(null);
+    setConfirmation(null);
     startTransition(async () => {
       const result = await addProjectMaintainer({ projectId, githubLogin: login });
       if (result.ok) {
         setLogin("");
+        setConfirmation(`Added @${result.githubLogin} — saved.`);
         router.refresh();
       } else {
         setError(result.error);
@@ -39,10 +42,15 @@ export function MaintainerManager({
 
   function remove(githubLogin: string) {
     setError(null);
+    setConfirmation(null);
     startTransition(async () => {
       const result = await removeProjectMaintainer({ projectId, githubLogin });
-      if (result.ok) router.refresh();
-      else setError(result.error);
+      if (result.ok) {
+        setConfirmation(`Removed @${githubLogin} — saved.`);
+        router.refresh();
+      } else {
+        setError(result.error);
+      }
     });
   }
 
@@ -98,6 +106,7 @@ export function MaintainerManager({
       </div>
 
       {error && <div className="notice is-error">{error}</div>}
+      {confirmation && <div className="notice is-success">{confirmation}</div>}
     </div>
   );
 }

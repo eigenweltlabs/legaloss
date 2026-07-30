@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { categories, projectCategories, projectStats, users } from "@/lib/db/schema";
 import { isAdminUser } from "@/lib/admin";
-import { canEditProject } from "@/lib/maintainers";
+import { canEditProject, listProjectMaintainers } from "@/lib/maintainers";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { hfTypeLabel } from "@/lib/huggingface";
 import { projectHref, sourceExternalUrl } from "@/lib/sources";
@@ -20,6 +20,7 @@ import {
 import { formatCount, formatDate, timeAgo } from "@/lib/format";
 import { StarButton } from "@/components/star-button";
 import { CommentComposer } from "@/components/comment-composer";
+import { MaintainerCardExtras } from "@/components/maintainer-card-extras";
 import { FeatureToggle } from "@/components/feature-toggle";
 import { ReviewComposer } from "@/components/review-composer";
 import { EntryDelete } from "@/components/entry-delete";
@@ -69,7 +70,7 @@ export default async function HfProjectPage({ params }: { params: Params }) {
 
   const { userId } = await auth();
 
-  const [stats, cats, social, claimant] = await Promise.all([
+  const [stats, cats, social, claimant, maintainers] = await Promise.all([
     ensureFreshStats(project),
     db
       .select({ slug: categories.slug, name: categories.name })
@@ -86,6 +87,7 @@ export default async function HfProjectPage({ params }: { params: Params }) {
           .limit(1)
           .then((r) => r[0] ?? null)
       : Promise.resolve(null),
+    listProjectMaintainers(project.id),
   ]);
   const custom = await getCustomReadme(project.id);
   const cardHtml =
@@ -93,6 +95,7 @@ export default async function HfProjectPage({ params }: { params: Params }) {
     (stats ? await ensureFreshReadme(project, "main") : null);
 
   const canEdit = await canEditProject(project, userId ?? null);
+  const isClaimant = userId !== null && project.claimedById === userId;
   const isAdmin = isAdminUser(userId);
   const avgRating =
     social.reviews.length > 0
@@ -321,6 +324,11 @@ export default async function HfProjectPage({ params }: { params: Params }) {
                     </span>
                   </div>
                 </div>
+                <MaintainerCardExtras
+                  projectId={project.id}
+                  maintainers={maintainers.map((m) => ({ githubLogin: m.githubLogin }))}
+                  isClaimant={isClaimant}
+                />
                 <p className="form-hint">
                   Ownership verified via Hugging Face{" "}
                   {project.claimedAt ? `on ${formatDate(project.claimedAt)}` : ""}.

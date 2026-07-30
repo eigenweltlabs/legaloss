@@ -1252,6 +1252,27 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
 /* NEWSLETTER-SURFACES-STYLES-END */
 
 /* ==========================================================================
+   Maintainer manager dialog
+   ========================================================================== */
+
+.mm-dialog {
+  margin: auto;
+  width: min(460px, calc(100vw - 32px));
+  padding: 22px;
+  background: var(--paper-lift);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-overlay);
+}
+.mm-dialog::backdrop {
+  background: rgba(31, 18, 8, 0.35);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+/* MAINTAINER-DIALOG-STYLES-END */
+
+/* ==========================================================================
    Mobile & touch ergonomics
    ========================================================================== */
 
