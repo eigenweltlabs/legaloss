@@ -11,7 +11,8 @@ export default function SignUpPage() {
         <h1 className="display-s">Join the index.</h1>
         <p className="body">
           An account is optional for browsing. It unlocks stars, reviews,
-          comments, and maintainer claims.
+          comments, and maintainer claims. Your email joins the
+          featured-projects newsletter — unsubscribe from any issue.
         </p>
       </div>
       <div className="auth-shell">

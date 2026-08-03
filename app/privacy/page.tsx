@@ -56,8 +56,10 @@ export default function PrivacyPage() {
           <h3 style={{ fontSize: 15 }}>Newsletter</h3>
           <p className="body">
             The featured-projects newsletter runs on Brevo. Subscribing stores
-            your email address there; every issue carries an unsubscribe link,
-            and unsubscribing removes you from the list. Your address is used
+            your email address there — as does creating an account, which adds
+            your sign-up address to the same list. Every issue carries an
+            unsubscribe link, unsubscribing removes you from the list, and
+            signing up again will not put you back on it. Your address is used
             for nothing else.
           </p>
         </div>

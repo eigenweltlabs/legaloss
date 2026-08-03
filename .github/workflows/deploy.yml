@@ -57,5 +57,5 @@ jobs:
             --max-instances 1 \
             --memory 512Mi \
             --service-account legaloss-run@eigenweltlabs-training.iam.gserviceaccount.com \
-            --set-env-vars "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }},NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in,NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up,LITESTREAM_BUCKET=eigenweltlabs-training-legaloss-db,SEED_STARTERS=0,ADMIN_USER_IDS=${{ secrets.ADMIN_USER_IDS }},ADMIN_API_TOKEN=${{ secrets.ADMIN_API_TOKEN }},BREVO_API_KEY=${{ secrets.BREVO_API_KEY }},BREVO_LIST_ID=${{ secrets.BREVO_LIST_ID }}" \
+            --set-env-vars "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }},NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in,NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up,LITESTREAM_BUCKET=eigenweltlabs-training-legaloss-db,SEED_STARTERS=0,ADMIN_USER_IDS=${{ secrets.ADMIN_USER_IDS }},ADMIN_API_TOKEN=${{ secrets.ADMIN_API_TOKEN }},BREVO_API_KEY=${{ secrets.BREVO_API_KEY }},BREVO_LIST_ID=${{ secrets.BREVO_LIST_ID }},CLERK_WEBHOOK_SIGNING_SECRET=${{ secrets.CLERK_WEBHOOK_SIGNING_SECRET }}" \
             --set-secrets "CLERK_SECRET_KEY=legaloss-clerk-secret-key:latest,GITHUB_TOKEN=legaloss-github-token:latest"

@@ -1,12 +1,63 @@
 /**
- * Newsletter issue composition + Brevo campaign sending, shared by the CLI
- * script (scripts/send-newsletter.ts) and the admin API route. Pure functions
- * plus fetch calls — no server-only import so tsx can run the script.
+ * Newsletter issue composition + Brevo contact/campaign calls, shared by the
+ * CLI script (scripts/send-newsletter.ts), the admin API route, the signup
+ * form, and the Clerk webhook. Pure functions plus fetch calls — no
+ * server-only import so tsx can run the script.
  */
 
 import { projectHref } from "@/lib/sources";
 
 const BREVO_API = "https://api.brevo.com/v3";
+
+export type BrevoConfig = { apiKey: string; listId: number };
+
+/**
+ * BREVO_API_KEY + BREVO_LIST_ID, or null when the newsletter is unconfigured —
+ * callers report themselves unconfigured rather than failing silently.
+ */
+export function brevoConfig(): BrevoConfig | null {
+  const apiKey = process.env.BREVO_API_KEY;
+  const listId = Number(process.env.BREVO_LIST_ID);
+  if (!apiKey || !Number.isInteger(listId) || listId <= 0) return null;
+  return { apiKey, listId };
+}
+
+/**
+ * Adds an address to the contact list. Idempotent: an address already on the
+ * list comes back ok. Only `listIds` is written, never `emailBlacklisted`, so
+ * someone who unsubscribed stays unsubscribed even if they sign up again.
+ */
+export async function addContact(opts: {
+  apiKey: string;
+  listId: number;
+  email: string;
+}): Promise<{ ok: true } | { error: string }> {
+  const res = await fetch(`${BREVO_API}/contacts`, {
+    method: "POST",
+    headers: {
+      "api-key": opts.apiKey,
+      "content-type": "application/json",
+      accept: "application/json",
+    },
+    body: JSON.stringify({
+      email: opts.email,
+      listIds: [opts.listId],
+      updateEnabled: true,
+    }),
+  });
+  if (res.ok) return { ok: true };
+
+  let detail: { code?: string; message?: string } = {};
+  try {
+    detail = (await res.json()) as typeof detail;
+  } catch {
+    // Brevo occasionally answers with a non-JSON body; the status still tells us enough.
+  }
+  if (detail.code === "duplicate_parameter") return { ok: true };
+  return {
+    error: `Brevo ${res.status} adding a contact: ${detail.code ?? ""} ${detail.message ?? ""}`.trim(),
+  };
+}
 
 export const NEWSLETTER_SENDER = {
   name: "LegalOSS · Eigenwelt Labs",
