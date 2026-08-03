@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server";
+import { addContact, brevoConfig } from "@/lib/newsletter";
 
 /**
  * Newsletter signup: adds the address to the LegalOSS list in Brevo. Issues
  * go out when new projects are featured (see scripts/send-newsletter.ts).
  * Requires BREVO_API_KEY and BREVO_LIST_ID; without them the endpoint reports
- * itself unconfigured instead of failing silently.
+ * itself unconfigured instead of failing silently. New accounts land on the
+ * same list through the Clerk webhook (app/api/clerk/webhook/route.ts).
  */
-const BREVO_CONTACTS_ENDPOINT = "https://api.brevo.com/v3/contacts";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(request: Request) {
-  const apiKey = process.env.BREVO_API_KEY;
-  const listId = Number(process.env.BREVO_LIST_ID);
-  if (!apiKey || !Number.isInteger(listId) || listId <= 0) {
+  const config = brevoConfig();
+  if (!config) {
     return NextResponse.json(
       { error: "The newsletter is not configured yet." },
       { status: 500 },
@@ -37,37 +37,14 @@ export async function POST(request: Request) {
     );
   }
 
-  const brevoResponse = await fetch(BREVO_CONTACTS_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "api-key": apiKey,
-      "content-type": "application/json",
-      accept: "application/json",
-    },
-    body: JSON.stringify({
-      email,
-      listIds: [listId],
-      updateEnabled: true,
-    }),
-  });
-
-  if (brevoResponse.ok) {
-    return NextResponse.json({ ok: true });
+  const result = await addContact({ ...config, email });
+  if ("error" in result) {
+    console.error("[subscribe]", result.error);
+    return NextResponse.json(
+      { error: "Subscription failed. Try again later." },
+      { status: 502 },
+    );
   }
 
-  let detail: { code?: string; message?: string } = {};
-  try {
-    detail = (await brevoResponse.json()) as typeof detail;
-  } catch {
-    // ignore
-  }
-  if (detail.code === "duplicate_parameter") {
-    return NextResponse.json({ ok: true });
-  }
-
-  console.error("[subscribe] Brevo error", brevoResponse.status, detail);
-  return NextResponse.json(
-    { error: "Subscription failed. Try again later." },
-    { status: 502 },
-  );
+  return NextResponse.json({ ok: true });
 }
