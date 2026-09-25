@@ -666,14 +666,15 @@ export async function ensureFreshReadme(project: {
     .limit(1);
   const row = existing[0] ?? null;
   const age = row ? (Date.now() - row.fetchedAt.getTime()) / 1000 : Infinity;
-  if (row && age < README_TTL_SECONDS) return row.html;
+  // A failed first fetch must not hide a subsequently available README for a day.
+  if (row?.html && age < README_TTL_SECONDS) return row.html;
 
   const html = project.source === "huggingface"
     ? await fetchHfReadmeHtml((project.sourceType ?? "model") as HfType, project.owner, project.repo)
     : project.source === "codeberg"
       ? await fetchCodebergReadmeHtml(project.owner, project.repo, defaultBranch)
       : await fetchReadmeHtml(project.owner, project.repo, defaultBranch);
-  if (html === null && row) return row.html; // keep stale on error
+  if (html === null) return row?.html ?? null; // keep stale on error; do not cache failures
 
   await db
     .insert(projectReadmes)
