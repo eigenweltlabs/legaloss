@@ -7,8 +7,8 @@ import { LICENSE_GROUPS, type LicenseGroup } from "@/lib/license";
 /** First entry is the default; keep it in sync with DEFAULT_SORT in app/page.tsx. */
 const SORTS = [
   { value: "site-stars", label: "Community stars" },
-  // One ranking across both sources: the column holds GitHub stars for GitHub
-  // repos and Hugging Face likes for Hugging Face ones.
+  // One ranking across sources: the column holds forge stars and Hugging Face
+  // likes.
   { value: "stars", label: "Stars & likes" },
   { value: "rating", label: "Top rated" },
   { value: "newest", label: "Recently added" },

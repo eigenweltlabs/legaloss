@@ -90,7 +90,7 @@ export function ReadmeEditor({
     },
   });
 
-  // After a reset, router.refresh() delivers the GitHub README as the new
+  // After a reset, router.refresh() delivers the upstream README as the new
   // initialHtml; swap the editing surface over to it exactly once.
   const lastInitial = useRef(initialHtml);
   const syncOnNextChange = useRef(false);
@@ -295,7 +295,7 @@ export function ReadmeEditor({
               className="btn btn-ghost btn-sm"
               onClick={() => setConfirmingReset(true)}
             >
-              Reset to GitHub README
+              Reset to repository README
             </button>
           ) : (
             <span className="cluster">

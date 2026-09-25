@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { projectStats } from "@/lib/db/schema";
 import { fetchReadmeText } from "@/lib/github";
+import { fetchCodebergReadmeText } from "@/lib/codeberg";
 import { hfRepoUrl, type HfType } from "@/lib/huggingface";
 
 /**
@@ -11,7 +12,7 @@ import { hfRepoUrl, type HfType } from "@/lib/huggingface";
  * token to the public repository, we read it back anonymously. The DNS-TXT
  * pattern, applied to repos.
  *
- * This exists because neither source offers a read-only "which organizations
+ * This exists because some sources do not offer a read-only "which organizations
  * am I in" scope — on Hugging Face the only way to see a user's orgs over
  * OAuth is `read-repos`, which also grants read access to their private
  * repositories. Maintainers who won't grant that (reasonably) get this path.
@@ -106,6 +107,12 @@ async function proofFileUrls(project: Subject): Promise<string[]> {
   );
   const owner = encodeURIComponent(project.owner);
   const repo = encodeURIComponent(project.repo);
+  if (project.source === "codeberg") {
+    return branches.map(
+      (branch) =>
+        `https://codeberg.org/${owner}/${repo}/raw/branch/${encodeURIComponent(branch)}/${CLAIM_FILE_NAME}`,
+    );
+  }
   return branches.map(
     (branch) =>
       `https://raw.githubusercontent.com/${owner}/${repo}/${encodeURIComponent(branch)}/${CLAIM_FILE_NAME}`,
@@ -121,6 +128,10 @@ async function readmeText(project: Subject): Promise<Fetched> {
       project.repo,
     );
     return fetchText(`${base}/raw/main/README.md`);
+  }
+  if (project.source === "codeberg") {
+    const text = await fetchCodebergReadmeText(project.owner, project.repo);
+    return text === null ? { error: "missing" } : { text: text.slice(0, MAX_BODY_BYTES) };
   }
   // GitHub's readme endpoint resolves any filename and casing for us.
   const text = await fetchReadmeText(project.owner, project.repo);

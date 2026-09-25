@@ -6,6 +6,7 @@ import { CardStar } from "@/components/card-star";
 import {
   IconCheck,
   IconClock,
+  IconCodeberg,
   IconDownload,
   IconFork,
   IconGitHub,
@@ -22,6 +23,8 @@ export function ProjectCard({
 }) {
   const desc = project.tagline ?? project.description;
   const isHf = project.source === "huggingface";
+  const isCodeberg = project.source === "codeberg";
+  const sourceName = isHf ? "Hugging Face" : isCodeberg ? "Codeberg" : "GitHub";
   return (
     <div className="card card-hover project-card">
       <div className="pc-cat">
@@ -64,12 +67,12 @@ export function ProjectCard({
         <span
           className="m pc-source"
           role="img"
-          aria-label={isHf ? "Hosted on Hugging Face" : "Hosted on GitHub"}
-          title={isHf ? "Hosted on Hugging Face" : "Hosted on GitHub"}
+          aria-label={`Hosted on ${sourceName}`}
+          title={`Hosted on ${sourceName}`}
         >
-          {isHf ? <IconHuggingFace /> : <IconGitHub />}
+          {isHf ? <IconHuggingFace /> : isCodeberg ? <IconCodeberg /> : <IconGitHub />}
         </span>
-        <span className="m" title={isHf ? "Hugging Face likes" : "GitHub stars"}>
+        <span className="m" title={isHf ? "Hugging Face likes" : `${sourceName} stars`}>
           <IconStar filled />
           {formatCount(project.ghStars)}
         </span>
@@ -84,7 +87,7 @@ export function ProjectCard({
             {formatCount(project.forks)}
           </span>
         )}
-        <span className="m" title={isHf ? "Last updated" : "Last push"}>
+        <span className="m" title={isHf || isCodeberg ? "Last updated" : "Last push"}>
           <IconClock />
           {timeAgo(project.pushedAt)}
         </span>

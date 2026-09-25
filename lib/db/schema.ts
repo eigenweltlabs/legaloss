@@ -27,7 +27,7 @@ export const projects = sqliteTable(
   "projects",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    /** Where the repo lives: "github" or "huggingface". */
+    /** Repository source: "github", "codeberg", or "huggingface". */
     source: text("source").notNull().default("github"),
     /** For Hugging Face: "model" | "dataset" | "space". Null for GitHub. */
     sourceType: text("source_type"),
@@ -36,8 +36,7 @@ export const projects = sqliteTable(
     repo: text("repo").notNull(),
     /**
      * Uniqueness key. GitHub keeps the bare lower(owner/repo) it always had;
-     * Hugging Face is prefixed lower(hf:type:owner/name) so a GitHub repo and
-     * an HF repo of the same name never collide.
+     * other sources are prefixed so same-named repos never collide.
      */
     fullNameKey: text("full_name_key").notNull(),
     name: text("name").notNull(),
@@ -68,12 +67,12 @@ export const projects = sqliteTable(
   ],
 );
 
-/** Cached GitHub repository stats, refreshed when stale. 1:1 with projects. */
+/** Cached source repository stats, refreshed when stale. 1:1 with projects. */
 export const projectStats = sqliteTable("project_stats", {
   projectId: integer("project_id")
     .primaryKey()
     .references(() => projects.id, { onDelete: "cascade" }),
-  /** GitHub stargazers, or Hugging Face likes. */
+  /** Forge stargazers, or Hugging Face likes. */
   stars: integer("stars").notNull().default(0),
   forks: integer("forks").notNull().default(0),
   openIssues: integer("open_issues").notNull().default(0),
@@ -94,13 +93,13 @@ export const projectStats = sqliteTable("project_stats", {
     .default(sql`(unixepoch())`),
 });
 
-/** Cached README rendered to HTML by GitHub. Kept apart from stats to keep list queries light. */
+/** Cached source README rendered to HTML. Kept apart from stats to keep list queries light. */
 export const projectReadmes = sqliteTable("project_readmes", {
   projectId: integer("project_id")
     .primaryKey()
     .references(() => projects.id, { onDelete: "cascade" }),
   html: text("html"),
-  /** Maintainer-authored override (sanitized HTML); shown instead of the GitHub README when set. */
+  /** Maintainer-authored override (sanitized HTML); shown instead of the upstream README when set. */
   customHtml: text("custom_html"),
   customUpdatedAt: integer("custom_updated_at", { mode: "timestamp" }),
   fetchedAt: integer("fetched_at", { mode: "timestamp" })
@@ -149,7 +148,7 @@ export const projectCategories = sqliteTable(
   (t) => [primaryKey({ columns: [t.projectId, t.categoryId] })],
 );
 
-/** Site-level stars ("endorsements"), independent of GitHub stargazers. */
+/** Site-level stars ("endorsements"), independent of upstream repo stars. */
 export const stars = sqliteTable(
   "stars",
   {

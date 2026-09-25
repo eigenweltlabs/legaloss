@@ -28,6 +28,7 @@ import {
   users,
 } from "@/lib/db/schema";
 import { fetchContributors, fetchOpenIssueCount, fetchReadmeHtml, fetchRepo } from "@/lib/github";
+import { codebergKey, fetchCodebergReadmeHtml, fetchCodebergRepo } from "@/lib/codeberg";
 import {
   CLASSIFIED_SPDX_IDS,
   isLicenseGroup,
@@ -72,7 +73,7 @@ export type ProjectListItem = {
 };
 
 export type SortKey =
-  /** GitHub stars and Hugging Face likes ranked together, in one list. */
+  /** GitHub/Codeberg stars and Hugging Face likes ranked together. */
   | "stars"
   | "site-stars"
   | "rating"
@@ -88,7 +89,7 @@ export async function listProjects(opts: {
   categorySlug?: string;
   q?: string;
   sort?: SortKey;
-  /** Filter to a primary GitHub language, e.g. "Python". */
+  /** Filter to a primary GitHub or Codeberg language, e.g. "Python". */
   language?: string;
   /** Filter to a license obligation group, e.g. "permissive". Ignored if unknown. */
   license?: string;
@@ -221,7 +222,7 @@ export async function listProjects(opts: {
   }
 
   const orderBy = {
-    // One column holds GitHub stars and Hugging Face likes, so both sources
+    // One column holds forge stars and Hugging Face likes, so all sources
     // rank in a single list.
     stars: [desc(projectStats.stars), desc(projectStats.downloads)],
     "site-stars": [desc(sql`coalesce(${siteStarAgg.n}, 0)`), desc(projectStats.stars)],
@@ -327,13 +328,14 @@ export async function listFilterOptions(): Promise<{
   licenses: LicenseGroup[];
 }> {
   const [langRows, licenseRows] = await Promise.all([
-    // GitHub only. The language column doubles as Hugging Face's pipeline tag,
-    // so an unscoped query offered "text-generation" and "gguf" as languages.
+    // GitHub and Codeberg only. The language column doubles as Hugging Face's
+    // pipeline tag, so an unscoped query offered "text-generation" and "gguf"
+    // as languages.
     db
       .selectDistinct({ v: projectStats.language })
       .from(projectStats)
       .innerJoin(projects, eq(projects.id, projectStats.projectId))
-      .where(and(isNotNull(projectStats.language), eq(projects.source, "github")))
+      .where(and(isNotNull(projectStats.language), inArray(projects.source, ["github", "codeberg"])))
       .orderBy(asc(projectStats.language)),
     db.selectDistinct({ v: projectStats.licenseSpdx }).from(projectStats),
   ]);
@@ -479,8 +481,10 @@ export async function listStarActivity(): Promise<StarRow[]> {
     .orderBy(desc(stars.createdAt));
 }
 
-export async function getProject(owner: string, repo: string) {
-  const key = `${owner}/${repo}`.toLowerCase();
+export async function getProject(owner: string, repo: string, source: "github" | "codeberg" = "github") {
+  const key = source === "codeberg"
+    ? codebergKey(owner, repo)
+    : `${owner}/${repo}`.toLowerCase();
   const row = await db
     .select()
     .from(projects)
@@ -521,7 +525,9 @@ export async function ensureFreshStats(project: StatsSubject) {
 
   const values = project.source === "huggingface"
     ? await freshHfStats(project)
-    : await freshGithubStats(project);
+    : project.source === "codeberg"
+      ? await freshCodebergStats(project)
+      : await freshGithubStats(project);
   if (!values) return stat; // keep stale cache on API hiccup / rate limit
 
   await db
@@ -560,6 +566,40 @@ async function freshGithubStats(project: StatsSubject) {
     stars: d.stars,
     forks: d.forks,
     openIssues: issueCount ?? d.openIssues,
+    subscribers: d.subscribers,
+    downloads: 0,
+    language: d.language,
+    licenseSpdx: normalizeSpdx(d.licenseSpdx),
+    licenseName: d.licenseName,
+    topics: d.topics,
+    description: d.description,
+    homepage: d.homepage,
+    defaultBranch: d.defaultBranch,
+    pushedAt: d.pushedAt,
+    archived: d.archived,
+    fetchedAt: new Date(),
+  };
+}
+
+async function freshCodebergStats(project: StatsSubject) {
+  const result = await fetchCodebergRepo(project.owner, project.repo);
+  if (result.error) return null;
+  const d = result.data;
+  if (d.owner !== project.owner || d.repo !== project.repo) {
+    await db
+      .update(projects)
+      .set({
+        owner: d.owner,
+        repo: d.repo,
+        fullNameKey: codebergKey(d.owner, d.repo),
+        updatedAt: new Date(),
+      })
+      .where(eq(projects.id, project.id));
+  }
+  return {
+    stars: d.stars,
+    forks: d.forks,
+    openIssues: d.openIssues,
     subscribers: d.subscribers,
     downloads: 0,
     language: d.language,
@@ -630,7 +670,9 @@ export async function ensureFreshReadme(project: {
 
   const html = project.source === "huggingface"
     ? await fetchHfReadmeHtml((project.sourceType ?? "model") as HfType, project.owner, project.repo)
-    : await fetchReadmeHtml(project.owner, project.repo, defaultBranch);
+    : project.source === "codeberg"
+      ? await fetchCodebergReadmeHtml(project.owner, project.repo, defaultBranch)
+      : await fetchReadmeHtml(project.owner, project.repo, defaultBranch);
   if (html === null && row) return row.html; // keep stale on error
 
   await db
@@ -647,9 +689,11 @@ const CONTRIBUTORS_TTL_SECONDS = 60 * 60 * 24; // 24 hours
 
 export async function ensureFreshContributors(project: {
   id: number;
+  source?: string;
   owner: string;
   repo: string;
 }) {
+  if (project.source && project.source !== "github") return null;
   const existing = await db
     .select()
     .from(projectContributors)

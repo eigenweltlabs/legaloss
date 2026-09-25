@@ -15,10 +15,10 @@ export default function AboutPage() {
           <h1 className="display-m">How this works.</h1>
         </div>
         <p className="body-l">
-          LegalOSS is a small index of open-source legal software. Every entry
-          is a real GitHub repository, its stats come straight from GitHub, and
-          each repository can be listed exactly once. Browsing needs no
-          account.
+          LegalOSS is a small index of open-source legal software. Entries
+          come from GitHub, Codeberg, or Hugging Face, stats come straight from
+          the source, and each upstream project can be listed exactly once.
+          Browsing needs no account.
         </p>
 
         <div className="stack-8">
@@ -44,8 +44,9 @@ export default function AboutPage() {
             </li>
           </ol>
           <p className="body">
-            For GitHub and for personal Hugging Face repos this reads your
-            public identity only, no repository scopes.
+            GitHub and personal Hugging Face claims read your public identity,
+            without repository scopes. Codeberg claims use the repository file
+            method below.
           </p>
 
           <h4 style={{ fontSize: 13.5, fontWeight: 600 }}>

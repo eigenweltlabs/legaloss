@@ -79,7 +79,7 @@ export function SiteHeader({
               </Link>
             )}
           </nav>
-          <span className="topbar-stat" title="GitHub stars across all indexed projects">
+          <span className="topbar-stat" title="Upstream stars and likes across all indexed projects">
             <IconStar filled />
             <span className="numeral">{formatCount(trackedStars)}</span>
             <span className="topbar-stat-l">tracked</span>

@@ -38,6 +38,7 @@ export function FeaturedRotator({ items }: { items: FeaturedRotatorItem[] }) {
         {loop.map((it, i) => {
           const clone = i >= items.length;
           const isHf = it.source === "huggingface";
+          const isCodeberg = it.source === "codeberg";
           return (
             <Link
               key={`${it.id}-${i}`}
@@ -46,8 +47,8 @@ export function FeaturedRotator({ items }: { items: FeaturedRotatorItem[] }) {
               aria-hidden={clone || undefined}
               tabIndex={clone ? -1 : undefined}
             >
-              {isHf ? (
-                <span className="fc-avatar fc-avatar-hf" aria-hidden>
+              {isHf || isCodeberg ? (
+                <span className={`fc-avatar ${isHf ? "fc-avatar-hf" : "fc-avatar-codeberg"}`} aria-hidden>
                   {it.owner.charAt(0).toUpperCase()}
                 </span>
               ) : (

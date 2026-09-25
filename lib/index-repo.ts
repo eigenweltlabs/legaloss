@@ -1,5 +1,6 @@
 import "server-only";
 import { fetchRepo, parseGitHubUrl } from "@/lib/github";
+import { codebergKey, fetchCodebergRepo, parseCodebergUrl } from "@/lib/codeberg";
 import {
   fetchHfRepo,
   hfKey,
@@ -11,12 +12,15 @@ import type { projectStats } from "@/lib/db/schema";
 
 export type Detected =
   | { source: "github"; owner: string; repo: string }
+  | { source: "codeberg"; owner: string; repo: string }
   | { source: "huggingface"; type: HfType; owner: string; repo: string };
 
 /** GitHub is the fallback so bare "owner/repo" stays a GitHub shorthand. */
 export function detectSource(input: string): Detected | null {
   const hf = parseHuggingFaceUrl(input);
   if (hf) return { source: "huggingface", ...hf };
+  const cb = parseCodebergUrl(input);
+  if (cb) return { source: "codeberg", ...cb };
   const gh = parseGitHubUrl(input);
   if (gh) return { source: "github", ...gh };
   return null;
@@ -24,7 +28,7 @@ export function detectSource(input: string): Detected | null {
 
 /** Everything the projects + projectStats inserts need, normalized per source. */
 export type ResolvedRepo = {
-  source: "github" | "huggingface";
+  source: "github" | "codeberg" | "huggingface";
   sourceType: string | null;
   owner: string;
   repo: string;
@@ -69,6 +73,41 @@ export async function resolveRepo(
           defaultBranch: "main",
           pushedAt: d.lastModified,
           archived: false,
+        },
+      },
+    };
+  }
+
+  if (detected.source === "codeberg") {
+    const result = await fetchCodebergRepo(detected.owner, detected.repo);
+    if (result.error) return { error: result.error.message };
+    const d = result.data;
+    if (d.isPrivate) return { error: "Only public repositories can be indexed." };
+    return {
+      data: {
+        source: "codeberg",
+        sourceType: null,
+        owner: d.owner,
+        repo: d.repo,
+        fullName: d.fullName,
+        key: codebergKey(d.owner, d.repo),
+        topics: d.topics,
+        description: d.description,
+        stats: {
+          stars: d.stars,
+          forks: d.forks,
+          openIssues: d.openIssues,
+          subscribers: d.subscribers,
+          downloads: 0,
+          language: d.language,
+          licenseSpdx: normalizeSpdx(d.licenseSpdx),
+          licenseName: d.licenseName,
+          topics: d.topics,
+          description: d.description,
+          homepage: d.homepage,
+          defaultBranch: d.defaultBranch,
+          pushedAt: d.pushedAt,
+          archived: d.archived,
         },
       },
     };

@@ -50,20 +50,20 @@ export const metadata: Metadata = {
     template: "%s · LegalOSS",
   },
   description:
-    "A community index of open-source legal software. Live GitHub stats, community reviews, maintainer-claimed pages.",
+    "A community index of open-source legal software. Live repository stats, community reviews, maintainer-claimed pages.",
   openGraph: {
     siteName: SITE_NAME,
     type: "website",
     url: SITE_URL,
     title: "LegalOSS · Open Source Legal Software",
     description:
-      "A community index of open-source legal software. Live GitHub stats, community reviews, maintainer-claimed pages.",
+      "A community index of open-source legal software. Live repository stats, community reviews, maintainer-claimed pages.",
   },
   twitter: {
     card: "summary",
     title: "LegalOSS · Open Source Legal Software",
     description:
-      "A community index of open-source legal software. Live GitHub stats, community reviews, maintainer-claimed pages.",
+      "A community index of open-source legal software. Live repository stats, community reviews, maintainer-claimed pages.",
   },
 };
 

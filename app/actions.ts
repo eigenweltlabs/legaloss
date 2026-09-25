@@ -26,7 +26,7 @@ import { verifyRepoOwnership } from "@/lib/github-ownership";
 import { sanitizeNote } from "@/lib/note-sanitize";
 import { verifyHfOwnership } from "@/lib/huggingface-ownership";
 import { detectSource, resolveRepo } from "@/lib/index-repo";
-import { projectHref } from "@/lib/sources";
+import { projectHref, sourceLabel } from "@/lib/sources";
 import { ensureCurrentUser, mirrorClerkUser } from "@/lib/users";
 
 type ActionError = { ok: false; error: string };
@@ -61,13 +61,13 @@ async function getProjectById(id: number) {
 
 export type RepoPreview = {
   ok: true;
-  source: "github" | "huggingface";
+  source: "github" | "codeberg" | "huggingface";
   sourceType: string | null;
   owner: string;
   repo: string;
   fullName: string;
   description: string | null;
-  /** GitHub stars or Hugging Face likes. */
+  /** Forge stars or Hugging Face likes. */
   stars: number;
   /** Hugging Face downloads (0 for GitHub). */
   downloads: number;
@@ -92,7 +92,7 @@ export async function previewRepo(
   const detected = detectSource(input);
   if (!detected) {
     return fail(
-      "That doesn't look like a repository. Paste a github.com/owner/repo or huggingface.co/owner/name URL.",
+      "That doesn't look like a repository. Paste a github.com/owner/repo, codeberg.org/owner/repo, or huggingface.co/owner/name URL.",
     );
   }
 
@@ -361,6 +361,7 @@ export type ClaimResult =
         | "repo-not-found"
         | "not-owner"
         | "github-error"
+        | "codeberg-file-verification"
         | "no-hf-connection"
         | "hf-error"
         | "already-claimed"
@@ -408,7 +409,12 @@ export async function claimProject(projectId: number): Promise<ClaimResult> {
 
   let login: string;
   let method: string;
-  if (project.source === "huggingface") {
+  if (project.source === "codeberg") {
+    return {
+      ...fail("Codeberg claims use the repository verification file below."),
+      reason: "codeberg-file-verification",
+    };
+  } else if (project.source === "huggingface") {
     const result = await verifyHfOwnership(userId, project.owner);
     if (!result.owned) {
       const messages: Record<string, string> = {
@@ -472,7 +478,7 @@ export async function claimProjectByFile(projectId: number): Promise<ClaimResult
     const messages: Record<typeof result.reason, string> = {
       "file-not-found": `No ${CLAIM_FILE_NAME} found in ${project.owner}/${project.repo}. Commit it to the default branch (or paste the token into the README) and try again.`,
       "file-mismatch": `${CLAIM_FILE_NAME} exists but doesn't contain your token. Check you copied the whole line — tokens are per person, so someone else's won't verify.`,
-      "fetch-error": `${project.source === "huggingface" ? "Hugging Face" : "GitHub"} couldn't be reached. Try again shortly.`,
+      "fetch-error": `${sourceLabel(project.source)} couldn't be reached. Try again shortly.`,
     };
     return { ...fail(messages[result.reason]), reason: result.reason };
   }
@@ -700,7 +706,7 @@ export async function updateProjectReadme(
   }
 
   const clean = sanitizeHtml(body.data.html, README_SANITIZE).trim();
-  // An effectively empty document clears the override back to the GitHub README.
+  // An effectively empty document clears the override back to the upstream README.
   const isEmpty = sanitizeHtml(clean, { allowedTags: [], allowedAttributes: {} }).trim() === "";
   const customHtml = isEmpty ? null : clean;
 
@@ -711,7 +717,7 @@ export async function updateProjectReadme(
       html: null,
       customHtml,
       customUpdatedAt: customHtml ? new Date() : null,
-      fetchedAt: new Date(0), // marks the GitHub cache stale so it refreshes on view
+      fetchedAt: new Date(0), // marks the upstream cache stale so it refreshes on view
     })
     .onConflictDoUpdate({
       target: projectReadmes.projectId,

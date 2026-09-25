@@ -31,7 +31,7 @@ export default async function AdminStarsPage() {
         <h1 className="display-m">Stars.</h1>
         <p className="body-l">
           Every community star cast on the index, and who cast it. Site stars
-          are separate from a project&apos;s GitHub stargazers, and they drive
+          are separate from a project&apos;s upstream stars or likes, and they drive
           the directory&apos;s default sort.
         </p>
       </div>
