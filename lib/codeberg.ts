@@ -1,4 +1,5 @@
 import "server-only";
+import { z } from "zod";
 
 const API = "https://codeberg.org/api/v1";
 const SITE = "https://codeberg.org";
@@ -98,26 +99,30 @@ export async function fetchCodebergRepo(
   };
 }
 
-/** Read the repository README using Forgejo's filename-aware contents endpoint. */
+/** Forgejo has no /readme endpoint. Discover the filename before reading it. */
 export async function fetchCodebergReadmeText(
   owner: string,
   repo: string,
   branch?: string,
 ): Promise<string | null> {
   const ref = branch ? `?ref=${encodeURIComponent(branch)}` : "";
-  let res: Response;
+  const contents = `${API}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents`;
+  const options: RequestInit = {
+    headers: { Accept: "application/json", "User-Agent": "legaloss" },
+    cache: "no-store",
+  };
   try {
-    res = await fetch(
-      `${API}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/readme${ref}`,
-      { headers: { Accept: "application/json", "User-Agent": "legaloss" }, cache: "no-store" },
-    );
-  } catch {
-    return null;
-  }
-  if (!res.ok) return null;
-  const file = await res.json();
-  if (typeof file.content !== "string") return null;
-  try {
+    const listing = await fetch(`${contents}${ref}`, options);
+    if (!listing.ok) return null;
+    const entries = z.array(z.object({ name: z.string(), type: z.string() }))
+      .parse(await listing.json());
+    const candidates = entries.filter(file => file.type === "file" && /^readme(?:\.[a-z0-9]+)?$/i.test(file.name));
+    const readme = candidates.find(file => /^readme\.(?:md|markdown)$/i.test(file.name)) ?? candidates[0];
+    if (!readme) return null;
+    const response = await fetch(`${contents}/${encodeURIComponent(readme.name)}${ref}`, options);
+    if (!response.ok) return null;
+    const file = z.object({ type: z.literal("file"), encoding: z.literal("base64"), content: z.string() })
+      .parse(await response.json());
     return Buffer.from(file.content.replace(/\s/g, ""), "base64").toString("utf8");
   } catch {
     return null;
@@ -166,4 +171,3 @@ export async function fetchCodebergReadmeHtml(
       `${pre}${blobBase}${url.replace(/^\.?\//, "")}"`,
     );
 }
-
