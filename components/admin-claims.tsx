@@ -430,6 +430,7 @@ export function AdminClaims({
           >
             <option value="">All sources</option>
             <option value="github">GitHub</option>
+            <option value="codeberg">Codeberg</option>
             <option value="huggingface">Hugging Face</option>
           </select>
         </div>

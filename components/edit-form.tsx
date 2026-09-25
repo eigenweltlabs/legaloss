@@ -101,7 +101,7 @@ export function EditForm({
           />
         </div>
         <p className="form-hint">
-          Shown instead of the GitHub description across the index.
+          Shown instead of the repository description across the index.
         </p>
       </div>
 

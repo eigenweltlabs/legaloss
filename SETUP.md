@@ -49,8 +49,10 @@ keyless mode.
 8. **Backfill / bulk indexing** — set `ADMIN_API_TOKEN` (locally and as a
    GitHub Actions secret), then POST the curated repo list — kept outside the
    repo on purpose — to `/api/admin/index-repos` with the Bearer token
-   (idempotent; already-indexed repos come back as `exists`):
-   `curl -X POST https://legal-oss.com/api/admin/index-repos -H "Authorization: Bearer $ADMIN_API_TOKEN" -H "Content-Type: application/json" -d '{"repos":[{"repo":"owner/name","categories":["platforms"],"tagline":"Short blurb"}]}'`
+   (idempotent; already-indexed repos come back as `exists`). Bare `owner/name`
+   remains a GitHub shorthand; use full `https://codeberg.org/owner/repo` URLs
+   for Codeberg:
+   `curl -X POST https://legal-oss.com/api/admin/index-repos -H "Authorization: Bearer $ADMIN_API_TOKEN" -H "Content-Type: application/json" -d '{"repos":[{"repo":"owner/name","categories":["platforms"],"tagline":"Short blurb"},{"repo":"https://codeberg.org/LACI/laci-core"}]}'`
 9. **Manual claim grants** — the break-glass path when a maintainer proves
    control out of band and neither self-serve route fits. Same Bearer token;
    identify the person by `userId` or `email` (they must have signed in at

@@ -5,19 +5,20 @@ A community index of open-source legal software, live at
 
 ## Rules of the index
 
-1. **Real repositories only.** Stats come from GitHub and Hugging Face, never
-   from the submitter.
+1. **Real repositories only.** Stats come from GitHub, Codeberg, and Hugging
+   Face, never from the submitter.
 2. **One entry per repository.** Uniqueness is enforced on the case-insensitive
-   `owner/repo` key; renames are re-canonicalized on refresh.
+   source-qualified `owner/repo` key for Codeberg and Hugging Face, plus the
+   existing bare GitHub key; renames are re-canonicalized on refresh.
 3. **Claims are proven, not asserted.** The claim flow fetches the user's GitHub
    OAuth token from Clerk and checks `permissions.admin` on the repo (with a
    numeric owner-ID fallback for personal repos); Hugging Face claims match the
    whoami-v2 identity or an organization role. Maintainers who would rather
    grant no OAuth scope at all can instead publish a per-person token in
-   `legaloss-verify.txt` (or the README), which is read back anonymously — the
-   only route that works for Hugging Face organizations without also granting
-   `read-repos` over private repositories. Only the verified claimant can edit a
-   project's name, tagline, website, categories, and maintainer's note.
+   `legaloss-verify.txt` (or the README), which is read back anonymously. This
+   file method is used for Codeberg and is also available for GitHub and Hugging
+   Face. Only the verified claimant can edit a project's name, tagline,
+   website, categories, and maintainer's note.
 
 Browsing needs no account. Signed-in members can star, review, comment, and
 submit projects.

@@ -82,6 +82,14 @@ export function IconGitHub(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function IconCodeberg(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden fill="currentColor" {...props}>
+      <path d="M10 1.8a8.2 8.2 0 1 0 8.2 8.2A8.21 8.21 0 0 0 10 1.8Zm0 2.1a6.1 6.1 0 1 1-6.1 6.1A6.11 6.11 0 0 1 10 3.9Zm-2.9 3.2a.9.9 0 0 0-.75 1.38l2.83 4.3a1 1 0 0 0 1.64 0l2.83-4.3a.9.9 0 0 0-.75-1.38H7.1Z" />
+    </svg>
+  );
+}
+
 export function IconHuggingFace(props: SVGProps<SVGSVGElement>) {
   // Simplified 🤗 mark: a round face with two eyes and a smile.
   return (

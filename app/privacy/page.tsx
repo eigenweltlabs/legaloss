@@ -68,8 +68,9 @@ export default function PrivacyPage() {
           <h3 style={{ fontSize: 15 }}>Project data</h3>
           <p className="body">
             Everything shown about a project — stars, forks, issues, license,
-            README, contributors — is public data fetched from the GitHub API
-            and cached server-side. Nothing is scraped from private sources.
+            README and repository stats — is public data fetched from GitHub,
+            Codeberg, or Hugging Face APIs, and cached server-side. Contributor
+            details come from GitHub. Nothing is scraped from private sources.
             Maintainers can have their project removed by contacting us.
           </p>
         </div>

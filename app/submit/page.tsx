@@ -13,8 +13,9 @@ export default function SubmitPage() {
           <span className="eyebrow">Submit</span>
           <h1 className="display-m">Add a project to the index.</h1>
           <p className="body-l">
-            Paste the GitHub repository. Stats come straight from the source and
-            each repository can be indexed exactly once. Tagline and categories
+            Paste a GitHub or Codeberg repository, or a Hugging Face model,
+            dataset, or space. Stats come straight from the source and each
+            repository can be indexed exactly once. Tagline and categories
             belong to the maintainer who claims it.
           </p>
         </div>

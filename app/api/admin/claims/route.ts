@@ -5,6 +5,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { claims, projectMaintainers, projects } from "@/lib/db/schema";
 import { isAdminRequest } from "@/lib/admin-token";
+import { codebergKey } from "@/lib/codeberg";
 import { hfKey } from "@/lib/huggingface";
 import { detectSource } from "@/lib/index-repo";
 import { projectHref } from "@/lib/sources";
@@ -52,9 +53,13 @@ type GrantResult = {
 function keyFor(input: string): string | null {
   const detected = detectSource(input);
   if (!detected) return null;
-  return detected.source === "huggingface"
-    ? hfKey(detected.type, detected.owner, detected.repo)
-    : `${detected.owner}/${detected.repo}`.toLowerCase();
+  if (detected.source === "huggingface") {
+    return hfKey(detected.type, detected.owner, detected.repo);
+  }
+  if (detected.source === "codeberg") {
+    return codebergKey(detected.owner, detected.repo);
+  }
+  return `${detected.owner}/${detected.repo}`.toLowerCase();
 }
 
 async function projectByRef(input: string) {

@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { previewRepo, submitProject, type RepoPreview } from "@/app/actions";
 import { formatCount } from "@/lib/format";
-import { IconCheck, IconGitHub, IconSearch, IconStar } from "@/components/icons";
+import { IconCheck, IconCodeberg, IconGitHub, IconSearch, IconStar } from "@/components/icons";
+import { sourceLabel } from "@/lib/sources";
 
 export function SubmitForm() {
   const router = useRouter();
@@ -49,15 +50,15 @@ export function SubmitForm() {
     <div className="stack-24">
       <div>
         <label className="form-label" htmlFor="repo-url">
-          GitHub or Hugging Face repository
+          Repository URL
         </label>
         <div className="repo-check-row">
           <div className="field">
-            <IconGitHub />
+            {url.toLowerCase().includes("codeberg.org/") ? <IconCodeberg /> : <IconGitHub />}
             <input
               id="repo-url"
               type="text"
-              placeholder="github.com/owner/repo or huggingface.co/owner/model"
+              placeholder="github.com, codeberg.org, or huggingface.co repository"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => {
@@ -79,7 +80,7 @@ export function SubmitForm() {
           </button>
         </div>
         <p className="form-hint">
-          Paste a GitHub repo, or a Hugging Face model, dataset, or space.
+          Paste a GitHub or Codeberg repository, or a Hugging Face model, dataset, or space.
         </p>
         {error && (
           <p className="form-error">
@@ -104,7 +105,7 @@ export function SubmitForm() {
                   </strong>
                   <span className="badge badge-success">
                     <IconCheck />
-                    {preview.source === "huggingface" ? "Found on Hugging Face" : "Found on GitHub"}
+                    {`Found on ${sourceLabel(preview.source)}`}
                   </span>
                   {preview.source === "huggingface" && preview.sourceType && (
                     <span className="status-pill is-hf">{preview.sourceType}</span>
@@ -158,7 +159,7 @@ export function SubmitForm() {
 
           <div className="row-between">
             <p className="form-hint" style={{ margin: 0, maxWidth: 380 }}>
-              Stats stay live from GitHub. Tagline and categories are curated by
+              Stats stay live from {sourceLabel(preview.source)}. Tagline and categories are curated by
               the maintainer once they claim the page.
             </p>
             <button

@@ -31,7 +31,7 @@ const LEGACY_SORTS: Record<string, SortKey> = { "gh-stars": "stars" };
 
 /**
  * The index leads with its own community's signal rather than GitHub's.
- * Ties fall back to GitHub stars, so the order stays sensible while site
+ * Ties fall back to upstream stars/likes, so the order stays sensible while site
  * stars are still sparse. Mirrored by SORTS[0] in browse-controls.
  */
 const DEFAULT_SORT: SortKey = "site-stars";
@@ -111,7 +111,7 @@ export default async function HomePage({
           </h1>
           <p className="dir-sub">
             {activeCat?.blurb ??
-              "Every project is a real GitHub repository, stats refreshed from the source. One listing per repo, reviewed by the community, claimed by its maintainer."}
+              "Every project is a real GitHub, Codeberg, or Hugging Face repository, with stats refreshed from its source. One listing per repo, reviewed by the community, claimed by its maintainer."}
           </p>
         </div>
         <span className="meta-mono">

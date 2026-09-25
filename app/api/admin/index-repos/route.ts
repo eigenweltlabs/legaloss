@@ -11,6 +11,7 @@ import {
 } from "@/lib/db/schema";
 import { isAdminRequest } from "@/lib/admin-token";
 import { autoCategorize } from "@/lib/auto-categories";
+import { codebergKey } from "@/lib/codeberg";
 import { hfKey } from "@/lib/huggingface";
 import { detectSource, resolveRepo } from "@/lib/index-repo";
 
@@ -85,9 +86,10 @@ export async function DELETE(request: Request) {
       results.push({ repo, status: "error" });
       continue;
     }
-    const key =
-      detected.source === "huggingface"
-        ? hfKey(detected.type, detected.owner, detected.repo)
+    const key = detected.source === "huggingface"
+      ? hfKey(detected.type, detected.owner, detected.repo)
+      : detected.source === "codeberg"
+        ? codebergKey(detected.owner, detected.repo)
         : `${detected.owner}/${detected.repo}`.toLowerCase();
     const removed = await db
       .delete(projects)
@@ -132,15 +134,16 @@ export async function POST(request: Request) {
       results.push({
         repo: entry.repo,
         status: "error",
-        message: "Not a valid GitHub or Hugging Face repository reference.",
+        message: "Not a valid GitHub, Codeberg, or Hugging Face repository reference.",
       });
       continue;
     }
 
     // Fast path: skip the API call when already indexed under this name.
-    const preKey =
-      detected.source === "huggingface"
-        ? hfKey(detected.type, detected.owner, detected.repo)
+    const preKey = detected.source === "huggingface"
+      ? hfKey(detected.type, detected.owner, detected.repo)
+      : detected.source === "codeberg"
+        ? codebergKey(detected.owner, detected.repo)
         : `${detected.owner}/${detected.repo}`.toLowerCase();
     if (await alreadyIndexed(preKey)) {
       results.push({ repo: entry.repo, status: "exists" });

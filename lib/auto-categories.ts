@@ -1,5 +1,5 @@
 /**
- * Provisional categorization for community submissions, derived from GitHub
+ * Provisional categorization for community submissions, derived from source
  * topics + description. Maintainers refine categories after claiming — the
  * submit flow itself takes no curation input.
  */

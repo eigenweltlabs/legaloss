@@ -411,6 +411,7 @@ a.tag:hover { background: var(--vermilion); border-color: var(--vermilion); colo
   font-family: var(--font-display); font-weight: 700; font-size: 18px;
 }
 .fc-avatar-hf { background: var(--butter); color: var(--ink-deep); }
+.fc-avatar-codeberg { background: var(--forest-200); color: var(--forest); }
 
 .avatar {
   display: inline-flex; align-items: center; justify-content: center;

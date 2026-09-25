@@ -3,7 +3,7 @@
  * shared by cards, the featured strip, detail pages, and the sitemap.
  */
 
-export type Source = "github" | "huggingface";
+export type Source = "github" | "codeberg" | "huggingface";
 
 type SourceShape = {
   source: string;
@@ -23,20 +23,24 @@ export function projectHref(p: SourceShape): string {
   if (p.source === "huggingface") {
     return `/hf/${p.sourceType ?? "model"}/${p.owner}/${p.repo}`;
   }
+  if (p.source === "codeberg") return `/codeberg/${p.owner}/${p.repo}`;
   return `/projects/${p.owner}/${p.repo}`;
 }
 
-/** The upstream public URL (github.com / huggingface.co). */
+/** The upstream public URL for the repository. */
 export function sourceExternalUrl(p: SourceShape): string {
   if (p.source === "huggingface") {
     const prefix = HF_PREFIX[p.sourceType ?? "model"] ?? "";
     return `https://huggingface.co/${prefix}${p.owner}/${p.repo}`;
   }
+  if (p.source === "codeberg") return `https://codeberg.org/${p.owner}/${p.repo}`;
   return `https://github.com/${p.owner}/${p.repo}`;
 }
 
 export function sourceLabel(source: string): string {
-  return source === "huggingface" ? "Hugging Face" : "GitHub";
+  if (source === "huggingface") return "Hugging Face";
+  if (source === "codeberg") return "Codeberg";
+  return "GitHub";
 }
 
 export function isHuggingFace(source: string): boolean {
