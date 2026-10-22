@@ -1,4 +1,4 @@
-FROM node:22-bookworm-slim AS base
+FROM node:22.23.4-bookworm-slim AS base
 RUN corepack enable
 WORKDIR /app
 
@@ -26,6 +26,8 @@ FROM base AS run
 ARG TARGETARCH
 ADD https://github.com/benbjohnson/litestream/releases/download/v0.3.13/litestream-v0.3.13-linux-${TARGETARCH}.deb /tmp/litestream.deb
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
+    && sed -i 's|^mozilla/emSign_ECC_Root_CA_-_G3.crt$|!mozilla/emSign_ECC_Root_CA_-_G3.crt|' /etc/ca-certificates.conf \
+    && update-ca-certificates \
     && dpkg -i /tmp/litestream.deb && rm /tmp/litestream.deb \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /data
